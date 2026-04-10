@@ -1,0 +1,21 @@
+/vendor/
+/node_modules/
+/.env
+/.env.local
+/.DS_Store
+/data/*.sqlite
+/public/uploads/
+/.vscode/
+/.idea/
+/*.log
+
+# OS files
+Thumbs.db
+desktop.ini
+
+# Composer
+composer.lock
+
+# Build outputs
+dist/
+build/

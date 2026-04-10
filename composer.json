@@ -1,0 +1,13 @@
+{
+    "name": "cliptecnologia/requerimiento-adapter",
+    "description": "Adaptador para guardar Requerimientos en Excel Online via Microsoft Graph",
+    "require": {
+        "guzzlehttp/guzzle": "^7.0",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Requerimiento\\": "src/"
+        }
+    }
+}
