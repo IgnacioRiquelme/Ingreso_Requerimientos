@@ -9,6 +9,7 @@ class ExcelGraphAdapter
     private $redirectUri;
     private $excelFilename;
     private $worksheetName;
+    private $onedriveFileUrl;
     private $tokenStoragePath;
     private $cachedItemId = null;  // caché para evitar 2 llamadas API por operación
 
@@ -18,12 +19,21 @@ class ExcelGraphAdapter
             session_start();
         }
 
-        $this->clientId         = $config['client_id']      ?? getenv('AZURE_CLIENT_ID');
-        $this->clientSecret     = $config['client_secret']  ?? getenv('AZURE_CLIENT_SECRET');
-        $this->tenantId         = $config['tenant_id']      ?? getenv('AZURE_TENANT_ID');
-        $this->redirectUri      = $config['redirect_uri']   ?? getenv('GRAPH_REDIRECT_URI');
-        $this->excelFilename    = $config['excel_filename'] ?? getenv('EXCEL_FILENAME');
-        $this->worksheetName    = $config['worksheet_name'] ?? getenv('WORKSHEET_NAME');
+        // Cargar .env si las variables aún no están disponibles
+        if (empty($_ENV['AZURE_CLIENT_ID']) && empty(getenv('AZURE_CLIENT_ID'))) {
+            if (class_exists('\Dotenv\Dotenv')) {
+                $dotenv = \Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
+                $dotenv->safeLoad();
+            }
+        }
+
+        $this->clientId         = $config['client_id']      ?? $_ENV['AZURE_CLIENT_ID']      ?? getenv('AZURE_CLIENT_ID');
+        $this->clientSecret     = $config['client_secret']  ?? $_ENV['AZURE_CLIENT_SECRET']  ?? getenv('AZURE_CLIENT_SECRET');
+        $this->tenantId         = $config['tenant_id']      ?? $_ENV['AZURE_TENANT_ID']      ?? getenv('AZURE_TENANT_ID');
+        $this->redirectUri      = $config['redirect_uri']   ?? $_ENV['GRAPH_REDIRECT_URI']   ?? getenv('GRAPH_REDIRECT_URI');
+        $this->excelFilename    = trim($config['excel_filename'] ?? $_ENV['EXCEL_FILENAME']   ?? getenv('EXCEL_FILENAME') ?? '', '"');
+        $this->worksheetName    = trim($config['worksheet_name'] ?? $_ENV['WORKSHEET_NAME']   ?? getenv('WORKSHEET_NAME') ?? '', '"');
+        $this->onedriveFileUrl  = $config['onedrive_file_url'] ?? $_ENV['ONEDRIVE_FILE_URL']  ?? getenv('ONEDRIVE_FILE_URL');
         $this->tokenStoragePath = __DIR__ . '/../storage/graph_token.json';
     }
 
@@ -123,6 +133,17 @@ class ExcelGraphAdapter
     {
         $stored = $this->loadTokenFromStorage();
         return !empty($stored['refresh_token']);
+    }
+
+    public function hasValidToken(): bool
+    {
+        $stored = $this->loadTokenFromStorage();
+        if (empty($stored['refresh_token'])) {
+            return false;
+        }
+        // Considerar expirado si ya venció o vence en menos de 5 minutos
+        $expiresAt = $stored['expires_at'] ?? 0;
+        return $expiresAt > (time() + 300);
     }
 
     private function saveTokenToStorage(array $tokenData): void
@@ -229,16 +250,29 @@ class ExcelGraphAdapter
         }
 
         $token = $this->getAccessToken();
-        $encodedPath = rawurlencode($this->excelFilename);
-        $url   = "https://graph.microsoft.com/v1.0/me/drive/root:/{$encodedPath}";
 
-        $item = $this->curlRequest('GET', $url, [
-            'Authorization' => "Bearer $token",
-            'Accept'        => 'application/json',
-        ]);
+        // Usar la URL compartida de OneDrive si está disponible (más confiable)
+        if (!empty($this->onedriveFileUrl)) {
+            $b64 = base64_encode($this->onedriveFileUrl);
+            $b64 = rtrim($b64, '=');
+            $b64 = strtr($b64, '+/', '-_');
+            $shareId = 'u!' . $b64;
+
+            $item = $this->curlRequest('GET', "https://graph.microsoft.com/v1.0/shares/{$shareId}/driveItem", [
+                'Authorization' => "Bearer $token",
+                'Accept'        => 'application/json',
+            ]);
+        } else {
+            // Fallback: buscar por nombre en el drive del usuario
+            $encodedPath = rawurlencode($this->excelFilename);
+            $item = $this->curlRequest('GET', "https://graph.microsoft.com/v1.0/me/drive/root:/{$encodedPath}", [
+                'Authorization' => "Bearer $token",
+                'Accept'        => 'application/json',
+            ]);
+        }
 
         if (empty($item['id'])) {
-            throw new \Exception("Could not find file '{$this->excelFilename}' in OneDrive: " . json_encode($item));
+            throw new \Exception("No se encontró el archivo Excel en OneDrive: " . json_encode($item));
         }
 
         $this->cachedItemId = $item['id'];

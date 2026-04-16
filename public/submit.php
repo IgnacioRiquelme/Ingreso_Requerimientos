@@ -40,6 +40,9 @@ function getRegistroTimestamp($userName) {
     return "$dia $mes $ano $hora:$minuto | Creado por: $userName";
 }
 
+// PASO 0: Asegurar que los combobox estén inicializados desde CSV
+require_once __DIR__ . '/ensure_combobox.php';
+
 // Leer valores de combobox desde BD (rápido)
 try {
     $db = new LocalDbAdapter();
@@ -115,9 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $db = new LocalDbAdapter();
             
-            // PASO 1: Obtener la siguiente fila disponible en BD
-            $adapter = new ExcelGraphAdapter();
-            $lastRow = $adapter->findLastDataRow(getenv('WORKSHEET_NAME') ?: 'Pasos a Producción');
+            // PASO 1: Obtener la siguiente fila disponible desde la BD local (evita duplicados)
+            $stmt = $db->pdo->query('SELECT MAX(excel_row) FROM requerimientos');
+            $lastRow = (int)($stmt->fetchColumn() ?: 0);
             $excelRow = $lastRow + 1;
             
             // Datos para guardar

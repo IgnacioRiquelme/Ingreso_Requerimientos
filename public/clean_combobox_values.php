@@ -1,14 +1,27 @@
 <?php
 /**
  * clean_combobox_values.php — Limpiar espacios de combobox_values
+ * Solo el admin (ignacio.riquelme@cliptecnologia.com) puede ejecutar
  * Elimina duplicados y espacios adicionales de todos los valores
  */
 date_default_timezone_set('America/Santiago');
+session_start();
 require __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\LocalDbAdapter;
 
 header('Content-Type: application/json');
+
+// Verificar que el usuario logueado sea el admin
+$emailAdminEsperado = 'ignacio.riquelme@cliptecnologia.com';
+if (!isset($_SESSION['user']['email']) || strtolower($_SESSION['user']['email']) !== strtolower($emailAdminEsperado)) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Acceso denegado. Solo el administrador puede realizar esta acción.'
+    ]);
+    exit;
+}
 
 try {
     $db = new LocalDbAdapter();
@@ -50,9 +63,12 @@ try {
         }
     }
     
+    // Log de auditoría
+    error_log("[ADMIN_CLEAN_COMBOBOX] {$_SESSION['user']['name']} limpió combobox_values");
+    
     echo json_encode([
         'success' => true,
-        'message' => "Limpieza completada: $insertCount valores sin espacios",
+        'message' => "✓ Limpieza completada: $insertCount valores sin espacios",
         'fields_processed' => array_keys($valuesByField)
     ]);
     

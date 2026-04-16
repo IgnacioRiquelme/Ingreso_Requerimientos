@@ -1,8 +1,8 @@
 <?php
 /**
  * add_combobox_value.php — Agregar valor nuevo a combobox
- * Requiere autenticación de admin para campos protegidos
- * Guarda en BD local (SQLite) en lugar de CSV
+ * Solicitante: cualquiera puede agregar
+ * Otros campos: solo admin (ignacio.riquelme@cliptecnologia.com) sin necesidad de contraseña
  */
 set_time_limit(30);
 session_start();
@@ -14,11 +14,13 @@ use Requerimiento\LocalDbAdapter;
 
 $response = ['success' => false, 'message' => ''];
 
-// Campos que requieren permiso de admin para agregar
-$fields_protected = ['requerimiento', 'negocio', 'ambiente', 'capa', 'servidor', 'estado', 'tipo_solicitud', 'tipo_pase', 'ic'];
-$field = $_POST['field'] ?? '';
-$value = trim($_POST['value'] ?? '');
-$password = $_POST['password'] ?? '';
+// Leer JSON desde php://input (no desde $_POST)
+$jsonData = json_decode(file_get_contents('php://input'), true);
+$field = $jsonData['field'] ?? '';
+$value = trim($jsonData['value'] ?? '');
+
+// Debug: registrar qué se recibe
+error_log('add_combobox_value.php: field=' . var_export($field, true) . ', value=' . var_export($value, true));
 
 if (!$field || !$value) {
     $response['message'] = 'Campo o valor inválido';
@@ -29,42 +31,27 @@ if (!$field || !$value) {
 try {
     $db = new LocalDbAdapter();
     
-    // Si es Solicitante, agregar sin admin
+    // Si es Solicitante, agregar sin restricciones (cualquiera puede agregar)
     if ($field === 'solicitante') {
         $existing = $db->getComboboxValues('solicitante');
         
         if (!in_array($value, $existing)) {
             $db->addComboboxValue('solicitante', $value);
             $response['success'] = true;
-            $response['message'] = "Nuevo solicitante '$value' agregado correctamente.";
+            $response['message'] = "✓ Nuevo solicitante '$value' agregado correctamente.";
         } else {
-            $response['message'] = "El solicitante '$value' ya existe.";
+            $response['message'] = "⚠️ El solicitante '$value' ya existe.";
         }
         
         echo json_encode($response);
         exit;
     }
     
-    // Para otros campos, verificar admin
-    if (!in_array($field, $fields_protected)) {
-        $response['message'] = 'Campo no válido';
-        echo json_encode($response);
-        exit;
-    }
-    
-    // Verificar credenciales de admin
-    $admins = json_decode(file_get_contents(__DIR__ . '/../storage/admins.json'), true);
-    $adminAutenticado = false;
-    
-    foreach ($admins as $admin) {
-        if (password_verify($password, $admin['password'])) {
-            $adminAutenticado = true;
-            break;
-        }
-    }
-    
-    if (!$adminAutenticado) {
-        $response['message'] = 'Credenciales de administrador inválidas';
+    // Para otros campos, verificar que el usuario sea admin
+    $emailAdminEsperado = 'ignacio.riquelme@cliptecnologia.com';
+    if (!isset($_SESSION['user']['email']) || strtolower($_SESSION['user']['email']) !== strtolower($emailAdminEsperado)) {
+        $response['message'] = 'Acceso denegado. Solo el administrador puede agregar a este campo.';
+        http_response_code(403);
         echo json_encode($response);
         exit;
     }
@@ -73,14 +60,17 @@ try {
     $existing = $db->getComboboxValues($field);
     
     if (!in_array($value, $existing)) {
-        $db->addComboboxValue($field, $value);
-        $response['success'] = true;
-        $response['message'] = "Valor '$value' agregado a $field.";
-        
-        // Log de auditoría
-        error_log("[ADMIN_COMBOBOX] Agregó '$value' a $field");
+        if ($db->addComboboxValue($field, $value)) {
+            $response['success'] = true;
+            $response['message'] = "✓ Valor '$value' agregado a $field correctamente.";
+            
+            // Log de auditoría
+            error_log("[ADMIN_COMBOBOX_ADD] {$_SESSION['user']['name']} agregó '$value' a $field");
+        } else {
+            $response['message'] = "❌ No se pudo guardar '$value' en la BD. Intenta de nuevo.";
+        }
     } else {
-        $response['message'] = "El valor '$value' ya existe en $field.";
+        $response['message'] = "⚠️ El valor '$value' ya existe en $field.";
     }
     
 } catch (Exception $e) {

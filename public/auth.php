@@ -3,6 +3,10 @@ session_start();
 
 require_once __DIR__ . '/../vendor/autoload.php';
 use Requerimiento\ExcelGraphAdapter;
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad();
 
 $adapter = new ExcelGraphAdapter();
 
@@ -17,8 +21,8 @@ if (!empty($_GET['code'])) {
     }
 }
 
-// ── Si ya hay token guardado, no se necesita volver a autenticar ─────────────
-if ($adapter->hasStoredToken()) {
+// ── Si ya hay token guardado Y vigente, no se necesita volver a autenticar ───
+if ($adapter->hasValidToken()) {
     header('Location: requerimientos.php');
     exit;
 }

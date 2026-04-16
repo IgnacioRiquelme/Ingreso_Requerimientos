@@ -3,7 +3,7 @@ date_default_timezone_set('America/Santiago');
 session_start();
 require __DIR__ . '/../vendor/autoload.php';
 
-use Requerimiento\ExcelGraphAdapter;
+use Requerimiento\LocalDbAdapter;
 
 if (!isset($_SESSION['user'])) {
     header('Location: login.php');
@@ -12,30 +12,25 @@ if (!isset($_SESSION['user'])) {
 
 $user = $_SESSION['user'];
 $storagePath = __DIR__ . '/../storage';
-$csvFile = $storagePath . '/Requerimientos.csv';
 
-// Función para determinar el turno según la hora del sistema
+// PASO 0: Asegurar que los combobox estén inicializados desde CSV
+require_once __DIR__ . '/ensure_combobox.php';
+
 function getTurno() {
     $hora = (int)date('H');
-    if ($hora >= 8 && $hora < 12) {
-        return 'Mañana';
-    } elseif ($hora >= 12 && $hora < 19) {
-        return 'Tarde';
-    } elseif ($hora >= 19 && $hora < 24) {
-        return 'Noche';
-    } else {
-        return 'Turno';  // 00:00 a 07:59
-    }
+    if ($hora >= 8 && $hora < 12) return 'Mañana';
+    elseif ($hora >= 12 && $hora < 19) return 'Tarde';
+    elseif ($hora >= 19 && $hora < 24) return 'Noche';
+    else return 'Turno';
 }
 
-// Función para generar timestamp en formato "1 octubre 2025 9:32 | Creado por: nombre"
 function getRegistroTimestamp($userName) {
     $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    $dia = (int)date('j');  // Día sin ceros iniciales
-    $mes = $meses[(int)date('n') - 1];  // Mes en texto
+    $dia = (int)date('j');
+    $mes = $meses[(int)date('n') - 1];
     $ano = date('Y');
-    $hora = date('G');  // Hora sin ceros iniciales
-    $minuto = date('i');  // Minuto con ceros
+    $hora = date('G');
+    $minuto = date('i');
     return "$dia $mes $ano $hora:$minuto | Creado por: $userName";
 }
 
@@ -45,54 +40,14 @@ if ($id === null) {
     exit;
 }
 
-$requerimiento = null;
-$allRequerimientos = [];
-$lineIndex = 0;
-
-// Conversión de serial Excel a fecha legible
-function excelDateToString($excelDate) {
-    if (is_numeric($excelDate) && $excelDate > 0) {
-        $unixDate = ($excelDate - 25569) * 86400;
-        return date('d/m/Y', $unixDate);
-    }
-    return (string)$excelDate;
-}
-
-// Leer desde SharePoint via Graph API
-// Mapeo: A(Turno), B(Fecha), C(Requerimiento), D(Solicitante), E(Negocio), F(Ambiente), G(Capa), H(Servidor)
-// I(Estado), J(Tipo Solicitud), K(Ticket), L(Tipo de Pase), M(IC), N(Cantidad), O(Tiempo Total), P(Tiempo unidad), Q(Observaciones), R(ID), S(Registro)
+// Leer desde la BD local (igual que requerimientos.php)
 try {
-    $graphAdapter = new ExcelGraphAdapter();
-    $worksheetName = getenv('WORKSHEET_NAME') ?: 'Pasos a Producción';
-    $allRows = $graphAdapter->getAllRows($worksheetName);
-    foreach ($allRows as $rowNum => $row) {
-        // Saltar fila 1 (título), fila 2 (vacía), fila 3 (encabezados)
-        if ($rowNum < 3) continue;
-        if (empty($row[0]) && empty($row[1]) && empty($row[2])) continue; // saltar filas vacías
-        $excelRow = $rowNum + 1; // fila real en Excel (rowNum es 0-based)
-        if ($excelRow == $id) {
-            $requerimiento = [
-                'numero_ticket' => $row[10] ?? '',
-                'solicitante' => $row[3] ?? '',
-                'requerimiento' => $row[2] ?? '',
-                'negocio' => $row[4] ?? '',
-                'ambiente' => $row[5] ?? '',
-                'capa' => $row[6] ?? '',
-                'servidor' => $row[7] ?? '',
-                'estado' => $row[8] ?? '',
-                'tipo_solicitud' => $row[9] ?? '',
-                'tipo_pase' => $row[11] ?? '',
-                'ic' => $row[12] ?? '',
-                'observaciones' => $row[16] ?? '',
-                'fecha' => excelDateToString($row[1] ?? ''),
-                'usuario' => $row[3] ?? '',
-                'timestamp' => $row[18] ?? '',
-                'excel_row' => $excelRow
-            ];
-        }
-    }
+    $db = new LocalDbAdapter();
+    $stmt = $db->pdo->prepare('SELECT * FROM requerimientos WHERE excel_row = ?');
+    $stmt->execute([$id]);
+    $requerimiento = $stmt->fetch(\PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-    die('Error conectando a SharePoint: ' . htmlspecialchars($e->getMessage()));
+    die('Error leyendo BD: ' . htmlspecialchars($e->getMessage()));
 }
 
 if (!$requerimiento) {
@@ -103,25 +58,39 @@ if (!$requerimiento) {
 $error = '';
 $success = false;
 
-// Función para leer CSV
-function leerCSV($archivo) {
-    if (file_exists($archivo)) {
-        $lines = file($archivo, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        return array_map('trim', $lines);
+// Cargar combobox desde BD (igual que submit.php para que los nuevos valores aparezcan)
+try {
+    $dbCombo = new LocalDbAdapter();
+    $tiposSolicitante    = array_map('trim', $dbCombo->getComboboxValues('solicitante'));
+    $tiposRequerimientos = array_map('trim', $dbCombo->getComboboxValues('requerimiento'));
+    $tiposNegocios       = array_map('trim', $dbCombo->getComboboxValues('negocio'));
+    $tiposAmbientes      = array_map('trim', $dbCombo->getComboboxValues('ambiente'));
+    $tiposCapa           = array_map('trim', $dbCombo->getComboboxValues('capa'));
+    $tiposServidor       = array_map('trim', $dbCombo->getComboboxValues('servidor'));
+    $tiposEstado         = array_map('trim', $dbCombo->getComboboxValues('estado'));
+    $tiposSolicitud      = array_map('trim', $dbCombo->getComboboxValues('tipo_solicitud'));
+    $tiposPase           = array_map('trim', $dbCombo->getComboboxValues('tipo_pase'));
+    $tiposIC             = array_map('trim', $dbCombo->getComboboxValues('ic'));
+} catch (Exception $e) {
+    // Fallback a CSV si la BD no está disponible
+    function leerCSV($archivo) {
+        if (file_exists($archivo)) {
+            $lines = file($archivo, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            return array_map('trim', $lines);
+        }
+        return [];
     }
-    return [];
+    $tiposSolicitante    = leerCSV($storagePath . '/tipos_solicitante.csv');
+    $tiposRequerimientos = leerCSV($storagePath . '/tipos_requerimientos.csv');
+    $tiposNegocios       = leerCSV($storagePath . '/tipos_negocios.csv');
+    $tiposAmbientes      = leerCSV($storagePath . '/tipos_ambientes.csv');
+    $tiposCapa           = leerCSV($storagePath . '/tipos_capa.csv');
+    $tiposServidor       = leerCSV($storagePath . '/tipos_servidor.csv');
+    $tiposEstado         = leerCSV($storagePath . '/tipos_estado.csv');
+    $tiposSolicitud      = leerCSV($storagePath . '/tipos_solicitud.csv');
+    $tiposPase           = leerCSV($storagePath . '/tipos_pase.csv');
+    $tiposIC             = leerCSV($storagePath . '/tipos_ic.csv');
 }
-
-$tiposSolicitante = leerCSV($storagePath . '/tipos_solicitante.csv');
-$tiposRequerimientos = leerCSV($storagePath . '/tipos_requerimientos.csv');
-$tiposNegocios = leerCSV($storagePath . '/tipos_negocios.csv');
-$tiposAmbientes = leerCSV($storagePath . '/tipos_ambientes.csv');
-$tiposCapa = leerCSV($storagePath . '/tipos_capa.csv');
-$tiposServidor = leerCSV($storagePath . '/tipos_servidor.csv');
-$tiposEstado = leerCSV($storagePath . '/tipos_estado.csv');
-$tiposSolicitud = leerCSV($storagePath . '/tipos_solicitud.csv');
-$tiposPase = leerCSV($storagePath . '/tipos_pase.csv');
-$tiposIC = leerCSV($storagePath . '/tipos_ic.csv');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validar campos obligatorios
@@ -134,57 +103,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!$error) {
-        // Orden correcto de columnas del Excel: A-S
-        // A=Turno, B=Fecha, C=Requerimiento, D=Solicitante, E=Negocio, F=Ambiente, G=Capa, H=Servidor
-        // I=Estado, J=Tipo Solicitud, K=Ticket, L=Tipo de Pase, M=IC, N=Cantidad, O=Tiempo Total, P=Tiempo unidad, Q=Observaciones, R=ID, S=Registro
-        $updatedRow = [
-            getTurno(),  // [0] A = Turno (actualizado automáticamente)
-        $requerimiento['fecha'],  // [1] B = Fecha (no cambia)
-        $_POST['requerimiento'] ?? '',  // [2] C = Requerimiento
-        $_POST['solicitante'] ?? '',  // [3] D = Solicitante
-        $_POST['negocio'] ?? '',  // [4] E = Negocio
-        $_POST['ambiente'] ?? '',  // [5] F = Ambiente
-        $_POST['capa'] ?? '',  // [6] G = Capa
-        $_POST['servidor'] ?? '',  // [7] H = Servidor
-        $_POST['estado'] ?? '',  // [8] I = Estado
-        $_POST['tipo_solicitud'] ?? '',  // [9] J = Tipo Solicitud
-        $_POST['numero_ticket'] ?? '',  // [10] K = Ticket
-        $_POST['tipo_pase'] ?? '',  // [11] L = Tipo de Pase
-        $_POST['ic'] ?? '',  // [12] M = IC
-        '1',  // [13] N = Cantidad
-        '',  // [14] O = Tiempo Total
-        '',  // [15] P = Tiempo unidad
-        $_POST['observaciones'] ?? '',  // [16] Q = Observaciones
-        '',  // [17] R = ID
-        getRegistroTimestamp($user['name'])  // [18] S = Registro
-    ];
-
-// Actualizar fila en Excel via Graph API
-        try {
-            $graphAdapter = new ExcelGraphAdapter();
-            $worksheetName = getenv('WORKSHEET_NAME') ?: 'Pasos a Producción';
-            $excelRow = $requerimiento['excel_row'] ?? ($id + 2); // +2: fila 1 es cabecera
-            $graphAdapter->updateRowInWorksheet($worksheetName, $excelRow, $updatedRow);
-            $success = true;
-        
-        // Recargar datos
-        $requerimiento = [
-            'numero_ticket' => $updatedRow[10] ?? '',  // K
-            'solicitante' => $updatedRow[3] ?? '',     // D
-            'requerimiento' => $updatedRow[2] ?? '',   // C
-            'negocio' => $updatedRow[4] ?? '',         // E
-            'ambiente' => $updatedRow[5] ?? '',        // F
-            'capa' => $updatedRow[6] ?? '',            // G
-            'servidor' => $updatedRow[7] ?? '',        // H
-            'estado' => $updatedRow[8] ?? '',          // I
-            'tipo_solicitud' => $updatedRow[9] ?? '',  // J
-            'tipo_pase' => $updatedRow[11] ?? '',      // L
-            'ic' => $updatedRow[12] ?? '',             // M
-            'observaciones' => $updatedRow[16] ?? '',  // Q
-            'fecha' => $updatedRow[1] ?? '',           // B
-            'usuario' => $updatedRow[3] ?? '',         // D
-            'timestamp' => $updatedRow[18] ?? ''       // S
+        $data = [
+            'turno'          => getTurno(),
+            'fecha'          => $requerimiento['fecha'],
+            'requerimiento'  => $_POST['requerimiento'] ?? '',
+            'solicitante'    => $_POST['solicitante'] ?? '',
+            'negocio'        => $_POST['negocio'] ?? '',
+            'ambiente'       => $_POST['ambiente'] ?? '',
+            'capa'           => $_POST['capa'] ?? '',
+            'servidor'       => $_POST['servidor'] ?? '',
+            'estado'         => $_POST['estado'] ?? '',
+            'tipo_solicitud' => $_POST['tipo_solicitud'] ?? '',
+            'numero_ticket'  => $_POST['numero_ticket'] ?? '',
+            'tipo_pase'      => $_POST['tipo_pase'] ?? '',
+            'ic'             => $_POST['ic'] ?? '',
+            'cantidad'       => $requerimiento['cantidad'] ?? '1',
+            'tiempo_total'   => $requerimiento['tiempo_total'] ?? '',
+            'tiempo_unidad'  => $requerimiento['tiempo_unidad'] ?? '',
+            'observaciones'  => $_POST['observaciones'] ?? '',
+            'registro'       => getRegistroTimestamp($user['name']),
         ];
+
+        try {
+            $db = new LocalDbAdapter();
+            $db->updateRequerimiento($id, $data);
+
+            // Marcar para sync a Excel en background
+            file_put_contents(__DIR__ . '/../storage/sync_pending.txt', "$id\n", FILE_APPEND | LOCK_EX);
+
+            $success = true;
+            $requerimiento = array_merge($requerimiento, $data);
         } catch (Exception $e) {
             $error = $e->getMessage();
         }
@@ -199,6 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script src="js/combobox-dynamic.js"></script>
     <style>
         .ts-control { border-radius: 0.375rem !important; border-color: rgb(209 213 219) !important; padding: 0.5rem !important; background-color: white !important; }
         .ts-wrapper { border-radius: 0.375rem; }
@@ -245,6 +194,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">SOLICITANTE</label>
                     <select name="solicitante" class="searchable w-full" required>
                         <option value="">Selecciona un solicitante</option>
+                        <?php if (!empty($requerimiento['solicitante']) && !in_array($requerimiento['solicitante'], $tiposSolicitante)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['solicitante']); ?>" selected><?php echo htmlspecialchars($requerimiento['solicitante']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposSolicitante as $s): ?>
                             <option value="<?php echo htmlspecialchars($s); ?>" <?php echo ($s === $requerimiento['solicitante']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($s); ?>
@@ -256,6 +208,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">REQUERIMIENTO</label>
                     <select name="requerimiento" class="searchable w-full" required>
                         <option value="">Selecciona un requerimiento</option>
+                        <?php if (!empty($requerimiento['requerimiento']) && !in_array($requerimiento['requerimiento'], $tiposRequerimientos)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['requerimiento']); ?>" selected><?php echo htmlspecialchars($requerimiento['requerimiento']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposRequerimientos as $r): ?>
                             <option value="<?php echo htmlspecialchars($r); ?>" <?php echo ($r === $requerimiento['requerimiento']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($r); ?>
@@ -271,6 +226,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">NEGOCIO</label>
                     <select name="negocio" class="searchable w-full" required>
                         <option value="">Selecciona un negocio</option>
+                        <?php if (!empty($requerimiento['negocio']) && !in_array($requerimiento['negocio'], $tiposNegocios)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['negocio']); ?>" selected><?php echo htmlspecialchars($requerimiento['negocio']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposNegocios as $n): ?>
                             <option value="<?php echo htmlspecialchars($n); ?>" <?php echo ($n === $requerimiento['negocio']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($n); ?>
@@ -282,6 +240,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">AMBIENTE</label>
                     <select name="ambiente" class="searchable w-full" required>
                         <option value="">Selecciona un ambiente</option>
+                        <?php if (!empty($requerimiento['ambiente']) && !in_array($requerimiento['ambiente'], $tiposAmbientes)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['ambiente']); ?>" selected><?php echo htmlspecialchars($requerimiento['ambiente']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposAmbientes as $a): ?>
                             <option value="<?php echo htmlspecialchars($a); ?>" <?php echo ($a === $requerimiento['ambiente']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($a); ?>
@@ -297,6 +258,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">CAPA</label>
                     <select name="capa" class="searchable w-full">
                         <option value="">Selecciona una capa</option>
+                        <?php if (!empty($requerimiento['capa']) && !in_array($requerimiento['capa'], $tiposCapa)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['capa']); ?>" selected><?php echo htmlspecialchars($requerimiento['capa']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposCapa as $c): ?>
                             <option value="<?php echo htmlspecialchars($c); ?>" <?php echo ($c === $requerimiento['capa']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($c); ?>
@@ -308,6 +272,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">SERVIDOR</label>
                     <select name="servidor" class="searchable w-full">
                         <option value="">Selecciona un servidor</option>
+                        <?php if (!empty($requerimiento['servidor']) && !in_array($requerimiento['servidor'], $tiposServidor)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['servidor']); ?>" selected><?php echo htmlspecialchars($requerimiento['servidor']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposServidor as $sv): ?>
                             <option value="<?php echo htmlspecialchars($sv); ?>" <?php echo ($sv === $requerimiento['servidor']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($sv); ?>
@@ -323,6 +290,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">ESTADO</label>
                     <select name="estado" class="searchable w-full">
                         <option value="">Selecciona un estado</option>
+                        <?php if (!empty($requerimiento['estado']) && !in_array($requerimiento['estado'], $tiposEstado)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['estado']); ?>" selected><?php echo htmlspecialchars($requerimiento['estado']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposEstado as $e): ?>
                             <option value="<?php echo htmlspecialchars($e); ?>" <?php echo ($e === $requerimiento['estado']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($e); ?>
@@ -334,6 +304,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">TIPO SOLICITUD</label>
                     <select name="tipo_solicitud" class="searchable w-full">
                         <option value="">Selecciona tipo de solicitud</option>
+                        <?php if (!empty($requerimiento['tipo_solicitud']) && !in_array($requerimiento['tipo_solicitud'], $tiposSolicitud)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['tipo_solicitud']); ?>" selected><?php echo htmlspecialchars($requerimiento['tipo_solicitud']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposSolicitud as $ts): ?>
                             <option value="<?php echo htmlspecialchars($ts); ?>" <?php echo ($ts === $requerimiento['tipo_solicitud']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($ts); ?>
@@ -349,6 +322,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">TIPO PASE</label>
                     <select name="tipo_pase" class="searchable w-full">
                         <option value="">Selecciona tipo de pase</option>
+                        <?php if (!empty($requerimiento['tipo_pase']) && !in_array($requerimiento['tipo_pase'], $tiposPase)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['tipo_pase']); ?>" selected><?php echo htmlspecialchars($requerimiento['tipo_pase']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposPase as $tp): ?>
                             <option value="<?php echo htmlspecialchars($tp); ?>" <?php echo ($tp === $requerimiento['tipo_pase']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($tp); ?>
@@ -360,6 +336,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="block text-sm font-semibold text-gray-700 mb-2">IC</label>
                     <select name="ic" class="searchable w-full">
                         <option value="">Selecciona IC</option>
+                        <?php if (!empty($requerimiento['ic']) && !in_array($requerimiento['ic'], $tiposIC)): ?>
+                            <option value="<?php echo htmlspecialchars($requerimiento['ic']); ?>" selected><?php echo htmlspecialchars($requerimiento['ic']); ?></option>
+                        <?php endif; ?>
                         <?php foreach ($tiposIC as $ic): ?>
                             <option value="<?php echo htmlspecialchars($ic); ?>" <?php echo ($ic === $requerimiento['ic']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($ic); ?>
@@ -378,9 +357,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- METADATA (Read-only) -->
             <div class="bg-gray-50 p-4 rounded border border-gray-200 text-sm text-gray-600">
-                <p><strong>Creado por:</strong> <?php echo htmlspecialchars($requerimiento['usuario']); ?></p>
                 <p><strong>Fecha:</strong> <?php echo htmlspecialchars($requerimiento['fecha']); ?></p>
-                <p><strong>Timestamp:</strong> <?php echo htmlspecialchars($requerimiento['timestamp']); ?></p>
+                <p><strong>Registro:</strong> <?php echo htmlspecialchars($requerimiento['registro']); ?></p>
             </div>
 
             <!-- BOTONES -->
@@ -399,11 +377,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.searchable').forEach(function (select) {
-            new TomSelect(select, { 
-                create: false, 
-                maxOptions: 500, 
-                sortField: { field: 'text', direction: 'asc' } 
-            });
+            const fieldName = select.name;
+            if (['solicitante', 'requerimiento', 'negocio', 'ambiente', 'capa', 'servidor', 'estado', 'tipo_solicitud', 'tipo_pase', 'ic'].includes(fieldName)) {
+                initializeCombobox(fieldName, select);
+            } else {
+                new TomSelect(select, {
+                    create: false,
+                    maxOptions: 500,
+                    sortField: { field: 'text', direction: 'asc' }
+                });
+            }
         });
     });
 </script>

@@ -2,6 +2,10 @@
 session_start();
 require_once __DIR__ . '/../vendor/autoload.php';
 use Requerimiento\ExcelGraphAdapter;
+use Dotenv\Dotenv;
+
+$dotenv = Dotenv::createImmutable(__DIR__ . '/..');
+$dotenv->safeLoad();
 
 // ── Admin-consent redirect (no lleva code) ──────────────────────────────────
 if (!empty($_GET['admin_consent']) && $_GET['admin_consent'] === 'True') {

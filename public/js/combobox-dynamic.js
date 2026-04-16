@@ -1,7 +1,8 @@
 /**
  * combobox-dynamic.js — Gestión dinámica de valores en combobox
- * Solicitante: solo confirmación (sin admin)
- * Otros: requiere admin password
+ * Solicitante: cualquiera puede agregar (sin admin)
+ * Otros campos (requerimiento, negocio, etc): solo el admin (ignacio.riquelme@cliptecnologia.com)
+ * Admin NO requiere contraseña adicional - solo confirmación en modal
  */
 
 const fieldProtected = ['requerimiento', 'negocio', 'ambiente', 'capa', 'servidor', 'estado', 'tipo_solicitud', 'tipo_pase', 'ic'];
@@ -48,7 +49,7 @@ function initializeCombobox(fieldName, selectElement) {
     return tomSelect;
 }
 
-// Manejo de nuevo solicitante (sin admin)
+// Manejo de nuevo solicitante (sin admin - cualquiera puede agregar)
 function handleNuevoSolicitante(field, valor, tomSelect, inputElement) {
     const modal = document.createElement('div');
     modal.id = 'modalConfirmacion';
@@ -61,7 +62,7 @@ function handleNuevoSolicitante(field, valor, tomSelect, inputElement) {
             </p>
             <div class="flex gap-3">
                 <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-2 px-4 rounded transition btnNo">
-                    No
+                    Cancelar
                 </button>
                 <button class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition btnSi">
                     Sí, agregar
@@ -80,22 +81,22 @@ function handleNuevoSolicitante(field, valor, tomSelect, inputElement) {
     });
 }
 
-// Manejo de nuevo valor con admin
+// Manejo de nuevo valor con admin (sin contraseña - solo confirm)
 function handleNuevoValorAdmin(field, valor, tomSelect, inputElement) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
     modal.innerHTML = `
         <div class="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 mb-3">¿Agregar nueva variable?</h3>
+            <h3 class="text-lg font-bold text-blue-700 mb-3">🔐 Confirmar Acción de Administrador</h3>
             <p class="text-gray-700 mb-6">
                 ¿Agregar <strong>"${valor}"</strong> al campo <strong>${field}</strong>?
             </p>
             <div class="flex gap-3">
                 <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-2 px-4 rounded transition btnNo">
-                    No
+                    Cancelar
                 </button>
-                <button class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition btnSi">
-                    Sí
+                <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition btnSi">
+                    Aceptar
                 </button>
             </div>
         </div>
@@ -108,100 +109,24 @@ function handleNuevoValorAdmin(field, valor, tomSelect, inputElement) {
     
     modal.querySelector('.btnSi').addEventListener('click', () => {
         modal.remove();
-        solicitarLoginAdmin(field, valor, tomSelect);
+        agregarConAdmin(field, valor, tomSelect);
     });
 }
 
-// Modal de login admin
-function solicitarLoginAdmin(field, valor, tomSelect) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">🔐 Acceso Administrador</h3>
-            <p class="text-gray-600 mb-4 text-sm">
-                Ingresa contraseña de administrador para agregar <strong>"${valor}"</strong>
-            </p>
-            <input type="password" id="adminPassword" placeholder="Contraseña de admin" class="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
-            <div id="errorMsg" class="text-red-600 text-sm mb-3 hidden"></div>
-            <div class="flex gap-3">
-                <button class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-2 rounded btnCancel">
-                    Cancelar
-                </button>
-                <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded btnConfirm">
-                    Aceptar
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    const passwordInput = modal.querySelector('#adminPassword');
-    const btnCancel = modal.querySelector('.btnCancel');
-    const btnConfirm = modal.querySelector('.btnConfirm');
-    const errorMsg = modal.querySelector('#errorMsg');
-    
-    btnCancel.addEventListener('click', () => {
-        modal.remove();
-    });
-    
-    btnConfirm.addEventListener('click', () => {
-        const password = passwordInput.value;
-        if (!password) {
-            errorMsg.textContent = 'Por favor ingresa la contraseña';
-            errorMsg.classList.remove('hidden');
-            return;
-        }
-        agregarConAdmin(field, valor, password, modal, tomSelect);
-    });
-    
-    passwordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') btnConfirm.click();
-    });
-    
-    passwordInput.focus();
-}
-
-// Modal de login admin para eliminar
-function solicitarLoginEliminar(field, valor) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">🔐 Acceso Administrador</h3>
-            <p class="text-gray-600 mb-4 text-sm">
-                Ingresa contraseña de administrador para eliminar <strong>"${valor}"</strong>
-            </p>
-            <input type="password" id="adminPassword2" placeholder="Contraseña de admin" class="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
-            <div class="flex gap-3">
-                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-2 rounded">
-                    Cancelar
-                </button>
-                <button onclick="eliminarConAdmin('${field}', '${valor}', document.getElementById('adminPassword2').value)" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded">
-                    Aceptar
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    document.getElementById('adminPassword2').focus();
-}
-
-// Agregar solicitante (sin auth) - FINAL
+// Agregar solicitante (sin admin - cualquiera) - FINAL
 function agregarSolicitanteFinal(field, valor, modal, tomSelect) {
     fetch('add_combobox_value.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ field, value: valor, password: null })
+        body: JSON.stringify({ field, value: valor })
     })
     .then(res => res.json())
     .then(data => {
         modal.remove();
         if (data.success) {
-            // Agregar a Tom-Select
-            tomSelect.addOption({ value: valor, text: valor });
-            tomSelect.setValue(valor);
-            mostrarNotificacion(`"${valor}" agregado a solicitantes ✓`, 'green');
+            mostrarNotificacion(data.message, 'green');
+            // Recargar página después de 1.5 segundos para que se vea el cambio en el listado
+            setTimeout(() => location.reload(), 1500);
         } else {
             mostrarNotificacion(data.message || 'Error al agregar', 'red');
         }
@@ -213,40 +138,35 @@ function agregarSolicitanteFinal(field, valor, modal, tomSelect) {
     });
 }
 
-// Agregar con admin
-function agregarConAdmin(field, valor, password, modal, tomSelect) {
+// Agregar con admin (sin contraseña - usa sesión actual)
+function agregarConAdmin(field, valor, tomSelect) {
     fetch('add_combobox_value.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ field, value: valor, password })
+        body: JSON.stringify({ field, value: valor })
     })
     .then(res => res.json())
     .then(data => {
-        modal.remove();
         if (data.success) {
-            // Agregar a Tom-Select
-            tomSelect.addOption({ value: valor, text: valor });
-            tomSelect.setValue(valor);
-            mostrarNotificacion(`"${valor}" agregado a ${field} ✓`, 'green');
-        } else if (data.message && (data.message.includes('credenciales') || data.message.includes('inválida'))) {
-            mostrarNotificacion('Contraseña incorrecta ✗', 'red');
+            mostrarNotificacion(data.message, 'green');
+            // Recargar página después de 1.5 segundos para que se vea el cambio en el listado
+            setTimeout(() => location.reload(), 1500);
         } else {
             mostrarNotificacion(data.message || 'Error al agregar', 'red');
         }
     })
     .catch(err => {
-        modal.remove();
         mostrarNotificacion('Error de conexión: ' + err.message, 'red');
         console.error(err);
     });
 }
 
-// Eliminar con admin
-function eliminarConAdmin(field, valor, password) {
+// Eliminar con admin (sin contraseña - usa sesión actual)
+function eliminarConAdmin(field, valor) {
     fetch('remove_combobox_value.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ field, value: valor, password })
+        body: JSON.stringify({ field, value: valor })
     })
     .then(res => res.json())
     .then(data => {
@@ -254,10 +174,8 @@ function eliminarConAdmin(field, valor, password) {
         if (modal) modal.remove();
         
         if (data.success) {
-            mostrarNotificacion(`"${valor}" eliminado de ${field} ✓`, 'green');
+            mostrarNotificacion(data.message, 'green');
             setTimeout(() => location.reload(), 1500);
-        } else if (data.message && (data.message.includes('credenciales') || data.message.includes('inválida'))) {
-            mostrarNotificacion('Contraseña incorrecta ✗', 'red');
         } else {
             mostrarNotificacion(data.message || 'Error al eliminar', 'red');
         }

@@ -15,6 +15,8 @@ class LocalDbAdapter
         $this->dbPath = __DIR__ . '/../storage/requerimientos.db';
         $this->pdo = new \PDO('sqlite:' . $this->dbPath);
         $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // Asegurar autocommit habilitado para SQLite
+        $this->pdo->setAttribute(\PDO::ATTR_AUTOCOMMIT, true);
         $this->ensureSchema();
     }
 
@@ -55,10 +57,14 @@ class LocalDbAdapter
             CREATE TABLE IF NOT EXISTS combobox_values (
                 id INTEGER PRIMARY KEY,
                 field TEXT NOT NULL,
-                value TEXT NOT NULL UNIQUE,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                value TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(field, value)
             )
         ');
+        
+        // Migrar tabla si tiene constraint incorrecto (value UNIQUE en lugar de UNIQUE(field,value))
+        $this->migrateComboboxSchema();
         
         $this->pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_value ON combobox_values(field, value)');
         
@@ -84,6 +90,42 @@ class LocalDbAdapter
     }
 
     /**
+     * Migrar schema de combobox_values si tiene UNIQUE(value) incorrecto
+     * Recrea la tabla con UNIQUE(field, value) correctamente
+     */
+    private function migrateComboboxSchema(): void
+    {
+        // Verificar si la constraint es incorrecta (solo value, no field+value)
+        $info = $this->pdo->query("SELECT sql FROM sqlite_master WHERE type='table' AND name='combobox_values'")->fetch(\PDO::FETCH_ASSOC);
+        if (!$info) return;
+        
+        $sql = strtolower($info['sql']);
+        // Si tiene 'value text not null unique' en lugar de 'unique(field, value)', migrar
+        if (strpos($sql, 'value text not null unique') !== false || strpos($sql, 'value text  not null unique') !== false) {
+            // Guardar datos actuales
+            $rows = $this->pdo->query('SELECT field, value FROM combobox_values')->fetchAll(\PDO::FETCH_ASSOC);
+            
+            // Recrear tabla con constraint correcto
+            $this->pdo->exec('DROP TABLE combobox_values');
+            $this->pdo->exec('
+                CREATE TABLE combobox_values (
+                    id INTEGER PRIMARY KEY,
+                    field TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(field, value)
+                )
+            ');
+            
+            // Reinsertar datos
+            $stmt = $this->pdo->prepare('INSERT OR IGNORE INTO combobox_values (field, value) VALUES (?, ?)');
+            foreach ($rows as $row) {
+                $stmt->execute([trim($row['field']), trim($row['value'])]);
+            }
+        }
+    }
+
+    /**
      * Obtener todos los valores para un combobox (con trim())
      */
     public function getComboboxValues(string $field): array
@@ -103,7 +145,7 @@ class LocalDbAdapter
     public function addComboboxValue(string $field, string $value): bool
     {
         try {
-            $value = trim($value);  // Eliminar espacios
+            $value = trim($value);
             if (!$value) return false;
             
             $stmt = $this->pdo->prepare('
@@ -112,7 +154,6 @@ class LocalDbAdapter
             $stmt->execute([$field, $value]);
             return true;
         } catch (\PDOException $e) {
-            // Si ya existe, ignorar
             if (strpos($e->getMessage(), 'UNIQUE constraint failed') !== false) {
                 return false;
             }

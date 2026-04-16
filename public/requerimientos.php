@@ -22,6 +22,9 @@ function excelDateToString($excelDate) {
     return (string)$excelDate;
 }
 
+// PASO 0: Asegurar que los combobox estén inicializados desde CSV
+require_once __DIR__ . '/ensure_combobox.php';
+
 // LEER DE LA BD (rápido)
 try {
     $db = new LocalDbAdapter();
@@ -491,7 +494,7 @@ function convertirInputDateAFecha(inputDate) {
 // Exportar datos filtrados a Excel (ExcelJS - .xlsx real con formato de encabezado)
 function exportarAExcel() {
     const filas = document.querySelectorAll('.fila-data');
-    const encabezados = ['Turno', 'Fecha', 'Ticket', 'Requerimiento', 'Solicitante', 'Negocio', 'Ambiente', 'Capa', 'Servidor', 'Estado', 'Tipo Solicitud', 'Tipo Pase', 'IC', 'Cantidad', 'Tiempo Total', 'Tiempo unidad', 'Observación', 'ID', 'Registro'];
+    const encabezados = ['Turno', 'Fecha', 'Requerimiento', 'Solicitante', 'Negocio', 'Ambiente', 'Capa', 'Servidor', 'Estado', 'Tipo Solicitud', 'Ticket', 'Tipo Pase', 'IC', 'Cantidad', 'Tiempo Total', 'Tiempo unidad', 'Observación', 'ID', 'Registro'];
 
     const filasDatos = [];
     filas.forEach(fila => {
@@ -499,7 +502,6 @@ function exportarAExcel() {
             filasDatos.push([
                 fila.getAttribute('data-turno') || '',
                 fila.getAttribute('data-fecha') || '',
-                fila.getAttribute('data-ticket') || '',
                 fila.getAttribute('data-requerimiento') || '',
                 fila.getAttribute('data-solicitante') || '',
                 fila.getAttribute('data-negocio') || '',
@@ -508,6 +510,7 @@ function exportarAExcel() {
                 fila.getAttribute('data-servidor') || '',
                 fila.getAttribute('data-estado') || '',
                 fila.getAttribute('data-tipo-solicitud') || '',
+                fila.getAttribute('data-ticket') || '',
                 fila.getAttribute('data-tipo-pase') || '',
                 fila.getAttribute('data-ic') || '',
                 fila.getAttribute('data-cantidad') || '',
