@@ -28,8 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['confirmar'])) {
         
         // Importar todos los datos del Excel
         $excel = new \Requerimiento\ExcelGraphAdapter();
-        $worksheetName = getenv('WORKSHEET_NAME') ?: 'Pasos a Producción';
-        $allRows = $excel->getAllRows($worksheetName);
+        $worksheetName = getenv('WORKSHEET_NAME') ?: 'Requerimientos';
+        $allRows = $excel->getAllRowsOrFail($worksheetName);
+        if (empty($allRows)) {
+            throw new \Exception("La hoja '$worksheetName' no devolvió filas. Verifica el nombre en .env (WORKSHEET_NAME).");
+        }
         $db->syncFromExcel($allRows);
         
         $count = $db->countRequerimientos();

@@ -375,21 +375,27 @@ class ExcelGraphAdapter
 
     public function getAllRows(string $worksheetName): array
     {
+        try {
+            return $this->getAllRowsOrFail($worksheetName);
+        } catch (\Exception $e) {
+            error_log("getAllRows error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function getAllRowsOrFail(string $worksheetName): array
+    {
         // Usa usedRange para obtener solo las filas realmente utilizadas ─ no las 5000 vacías
         $token  = $this->getAccessToken();
         $itemId = $this->resolveWorkbookItemId();
         $url    = "https://graph.microsoft.com/v1.0/me/drive/items/{$itemId}/workbook/worksheets/"
                 . rawurlencode($worksheetName) . '/usedRange(valuesOnly=true)';
 
-        try {
-            $data = $this->curlRequest('GET', $url, [
-                'Authorization' => "Bearer $token",
-                'Accept'        => 'application/json',
-            ]);
-            return $data['values'] ?? [];
-        } catch (\Exception $e) {
-            return []; // hoja vacía
-        }
+        $data = $this->curlRequest('GET', $url, [
+            'Authorization' => "Bearer $token",
+            'Accept'        => 'application/json',
+        ]);
+        return $data['values'] ?? [];
     }
 
     // Escribe el título y encabezados de columna (ejecutar una sola vez al inicializar el archivo)
