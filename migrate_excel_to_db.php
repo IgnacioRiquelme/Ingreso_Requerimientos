@@ -63,59 +63,13 @@ try {
     
     // ── PASO 3: Insertar registros ────────────────────────────
     echo "\n📥 PASO 3: Insertando registros...\n";
-    $inserted = 0;
-    $skipped = 0;
     
-    // Sync: filas 3+ (saltando encabezados)
-    foreach ($allRows as $rowNum => $row) {
-        if ($rowNum < 3) continue; // Skip header rows
-        if (empty($row[0]) && empty($row[1]) && empty($row[2])) {
-            $skipped++;
-            continue;
-        }
-        
-        $excelRow = $rowNum + 1;
-        $data = [
-            'turno'           => trim($row[0] ?? ''),
-            'fecha'           => $db->excelDateToString($row[1] ?? ''),
-            'requerimiento'   => trim($row[2] ?? ''),
-            'solicitante'     => trim($row[3] ?? ''),
-            'negocio'         => trim($row[4] ?? ''),
-            'ambiente'        => trim($row[5] ?? ''),
-            'capa'            => trim($row[6] ?? ''),
-            'servidor'        => trim($row[7] ?? ''),
-            'estado'          => trim($row[8] ?? ''),
-            'tipo_solicitud'  => trim($row[9] ?? ''),
-            'numero_ticket'   => trim($row[10] ?? ''),
-            'tipo_pase'       => trim($row[11] ?? ''),
-            'ic'              => trim($row[12] ?? ''),
-            'cantidad'        => trim($row[13] ?? ''),
-            'tiempo_total'    => trim($row[14] ?? ''),
-            'tiempo_unidad'   => trim($row[15] ?? ''),
-            'observaciones'   => trim($row[16] ?? ''),
-            'registro'        => trim($row[18] ?? ''),
-        ];
-        
-        try {
-            $db->insertRequerimiento($excelRow, $data);
-            $inserted++;
-            
-            if ($inserted % 50 === 0) {
-                echo ".";
-            }
-        } catch (Exception $e) {
-            error_log("Error fila $excelRow: " . $e->getMessage());
-        }
-    }
-    
-    echo "\n✓ $inserted registros insertados\n";
-    if ($skipped > 0) echo "  ($skipped filas vacías saltadas)\n";
-    
-    $total = $db->countRequerimientos();
-    echo "✓ Total en BD: $total\n";
+    // Usar syncFromExcel que ya maneja la conversión de fechas y trimming
+    $db->syncFromExcel($allRows);
+    $inserted = $db->countRequerimientos();
     
     // ── PASO 4: Sincronizar a Excel ───────────────────────────
-    echo "\n☁️  PASO 4: Sincronizando a Excel (backup)...\n";
+    echo "\n☁️  PASO 4: Sincronizando $inserted registros a Excel (backup)...\n";
     
     $allReqs = $db->getAllRequerimientos();
     $synced = 0;
@@ -140,7 +94,7 @@ try {
     echo "╔════════════════════════════════════════════════════════════╗\n";
     echo "║                   ✅ MIGRACIÓN COMPLETA                     ║\n";
     echo "╠════════════════════════════════════════════════════════════╣\n";
-    echo "║  📊 BD SQLite: $total registros                              ║\n";
+    echo "║  📊 BD SQLite: $inserted registros                           ║\n";
     echo "║  ☁️  Excel: $synced registros                                ║\n";
     echo "║                                                            ║\n";
     echo "║  Próximos pasos:                                           ║\n";
