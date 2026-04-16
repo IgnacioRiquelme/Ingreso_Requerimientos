@@ -186,6 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label class="block text-sm font-semibold text-gray-700 mb-2">NUMERO DE TICKET</label>
                 <input type="text" value="<?php echo htmlspecialchars($requerimiento['numero_ticket']); ?>" disabled
                     class="w-full p-2 border border-gray-300 rounded bg-gray-100 text-gray-600" />
+                <input type="hidden" name="numero_ticket" value="<?php echo htmlspecialchars($requerimiento['numero_ticket']); ?>" />
             </div>
 
             <!-- Row 1: SOLICITANTE, REQUERIMIENTO -->
