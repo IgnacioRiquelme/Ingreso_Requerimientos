@@ -205,7 +205,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($success): ?>
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
                 ✅ Requerimiento guardado correctamente
+                <span id="sync-status" class="ml-2 text-sm text-green-600">(sincronizando con Excel...)</span>
             </div>
+            <script>
+            fetch('sync.php?action=sync')
+                .then(r => r.json())
+                .then(data => {
+                    const el = document.getElementById('sync-status');
+                    if (el) el.textContent = data.synced_count > 0
+                        ? '✔ Sincronizado con Excel (' + data.synced_count + ' registro/s)'
+                        : '(sin pendientes)';
+                })
+                .catch(() => {
+                    const el = document.getElementById('sync-status');
+                    if (el) el.textContent = '⚠ No se pudo sincronizar con Excel ahora (se reintentará)';
+                });
+            </script>
         <?php endif; ?>
 
         <form method="POST" class="space-y-6">
