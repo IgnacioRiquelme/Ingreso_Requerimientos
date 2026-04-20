@@ -438,7 +438,7 @@ class ExcelGraphAdapter
             $dbRow['tiempo_total'] ?? '',
             $dbRow['tiempo_unidad'] ?? '',
             $dbRow['observaciones'] ?? '',
-            $dbRow['id'] ?? '',
+            $dbRow['excel_row'] ?? '',
             $dbRow['registro'] ?? '',
         ];
 

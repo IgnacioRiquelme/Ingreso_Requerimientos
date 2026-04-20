@@ -34,6 +34,20 @@ function getRegistroTimestamp($userName) {
     return "$dia $mes $ano $hora:$minuto | Creado por: $userName";
 }
 
+function normalizarTextoEdit(string $s): string {
+    $s = mb_strtolower(trim($s));
+    return str_replace(['á','é','í','ó','ú','ü','ñ'], ['a','e','i','o','u','u','n'], $s);
+}
+
+function esReqQAEdit(string $req): bool {
+    return normalizarTextoEdit($req) === 'pase a qa';
+}
+
+function esReqProduccionEdit(string $req): bool {
+    $n = normalizarTextoEdit($req);
+    return str_contains($n, 'produccion') || str_contains($n, 'paso a prod') || str_contains($n, 'pasos a prod');
+}
+
 $id = $_GET['id'] ?? null;
 if ($id === null) {
     header('Location: requerimientos.php');
@@ -103,6 +117,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (!$error) {
+        // Validar ticket duplicado (excluyendo el registro actual)
+        try {
+            $dbChk = new LocalDbAdapter();
+            $ticketBuscar = trim($_POST['numero_ticket']);
+            $nuevoReq     = trim($_POST['requerimiento']);
+            $chkStmt = $dbChk->pdo->prepare(
+                "SELECT excel_row, requerimiento FROM requerimientos WHERE LOWER(TRIM(numero_ticket)) = LOWER(?) AND excel_row != ?"
+            );
+            $chkStmt->execute([$ticketBuscar, $id]);
+            $existentes = $chkStmt->fetchAll(\PDO::FETCH_ASSOC);
+            if (!empty($existentes)) {
+                $nuevoEsProd = esReqProduccionEdit($nuevoReq);
+                $todosQA     = array_reduce($existentes, fn($carry, $ex) => $carry && esReqQAEdit($ex['requerimiento']), true);
+                if (!($nuevoEsProd && $todosQA)) {
+                    $ids = implode(', ', array_column($existentes, 'excel_row'));
+                    $error = "El ticket '$ticketBuscar' ya está registrado (ID: $ids). Solo se permite si el existente es 'Pase a QA' y este es 'Pase a Producción'.";
+                }
+            }
+        } catch (\Exception $e) {
+            if (empty($error)) $error = $e->getMessage();
+        }
+    }
+
+    if (!$error) {
         $data = [
             'turno'          => getTurno(),
             'fecha'          => $requerimiento['fecha'],
@@ -161,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h1 class="text-3xl font-bold">
                     <span class="text-indigo-600">✏️ Editar Requerimiento</span>
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Ticket: <strong><?php echo htmlspecialchars($requerimiento['numero_ticket']); ?></strong></p>
+                <p class="text-gray-600 text-sm mt-1">ID: <strong>#<?php echo htmlspecialchars($requerimiento['excel_row']); ?></strong> &mdash; Ticket: <strong><?php echo htmlspecialchars($requerimiento['numero_ticket']); ?></strong></p>
             </div>
             <a href="requerimientos.php" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-semibold transition">
                 ← Volver

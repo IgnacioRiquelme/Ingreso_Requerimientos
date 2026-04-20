@@ -157,6 +157,7 @@ $hoy = date('d/m/Y');
                             <table class="w-full" id="tablaRequerimientos">
                                 <thead class="bg-gray-100 border-b">
                                     <tr>
+                                        <th class="px-4 py-4 text-left text-sm font-semibold text-gray-500">#ID</th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Turno</th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Fecha</th>
                                         <th class="px-6 py-4 text-left text-sm font-semibold text-gray-700">Ticket</th>
@@ -170,6 +171,7 @@ $hoy = date('d/m/Y');
                                 <tbody class="divide-y" id="tablaBody">
                                     <?php foreach ($requerimientos as $req): ?>
                                         <tr class="hover:bg-gray-50 transition fila-data" data-turno="<?php echo htmlspecialchars($req['turno']); ?>" data-fecha="<?php echo htmlspecialchars($req['fecha']); ?>" data-ticket="<?php echo htmlspecialchars($req['numero_ticket']); ?>" data-requerimiento="<?php echo htmlspecialchars($req['requerimiento']); ?>" data-solicitante="<?php echo htmlspecialchars($req['solicitante']); ?>" data-negocio="<?php echo htmlspecialchars($req['negocio']); ?>" data-ambiente="<?php echo htmlspecialchars($req['ambiente']); ?>" data-capa="<?php echo htmlspecialchars($req['capa']); ?>" data-servidor="<?php echo htmlspecialchars($req['servidor']); ?>" data-estado="<?php echo htmlspecialchars($req['estado']); ?>" data-tipo-solicitud="<?php echo htmlspecialchars($req['tipo_solicitud']); ?>" data-tipo-pase="<?php echo htmlspecialchars($req['tipo_pase']); ?>" data-ic="<?php echo htmlspecialchars($req['ic']); ?>" data-cantidad="<?php echo htmlspecialchars($req['cantidad'] ?? ''); ?>" data-tiempo-total="<?php echo htmlspecialchars($req['tiempo_total'] ?? ''); ?>" data-tiempo-unidad="<?php echo htmlspecialchars($req['tiempo_unidad'] ?? ''); ?>" data-observaciones="<?php echo htmlspecialchars($req['observaciones'] ?? ''); ?>" data-id="<?php echo htmlspecialchars($req['excel_row'] ?? ''); ?>" data-registro="<?php echo htmlspecialchars($req['registro'] ?? ''); ?>">
+                                            <td class="px-4 py-4 font-mono text-xs text-gray-400 font-semibold"><?php echo htmlspecialchars($req['excel_row'] ?? ''); ?></td>
                                             <td class="px-6 py-4 font-semibold text-gray-900"><?php echo htmlspecialchars($req['turno']); ?></td>
                                             <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars($req['fecha']); ?></td>
                                             <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars($req['numero_ticket']); ?></td>

@@ -29,6 +29,21 @@ function getTurno() {
     }
 }
 
+// Normalizar texto: minúsculas sin tildes
+function normalizarTexto(string $s): string {
+    $s = mb_strtolower(trim($s));
+    return str_replace(['á','é','í','ó','ú','ü','ñ'], ['a','e','i','o','u','u','n'], $s);
+}
+
+function esReqQA(string $req): bool {
+    return normalizarTexto($req) === 'pase a qa';
+}
+
+function esReqProduccion(string $req): bool {
+    $n = normalizarTexto($req);
+    return str_contains($n, 'produccion') || str_contains($n, 'paso a prod') || str_contains($n, 'pasos a prod');
+}
+
 // Función para generar timestamp en formato "1 octubre 2025 9:32 | Creado por: nombre"
 function getRegistroTimestamp($userName) {
     $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -117,7 +132,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$error) {
         try {
             $db = new LocalDbAdapter();
-            
+
+            // Validar ticket duplicado
+            $ticketBuscar = trim($_POST['numero_ticket']);
+            $nuevoReq     = trim($_POST['requerimiento']);
+            $chkStmt = $db->pdo->prepare(
+                "SELECT excel_row, requerimiento FROM requerimientos WHERE LOWER(TRIM(numero_ticket)) = LOWER(?)"
+            );
+            $chkStmt->execute([$ticketBuscar]);
+            $existentes = $chkStmt->fetchAll(\PDO::FETCH_ASSOC);
+            if (!empty($existentes)) {
+                $nuevoEsProd = esReqProduccion($nuevoReq);
+                $todosQA     = array_reduce($existentes, fn($carry, $ex) => $carry && esReqQA($ex['requerimiento']), true);
+                if (!($nuevoEsProd && $todosQA)) {
+                    $ids = implode(', ', array_column($existentes, 'excel_row'));
+                    throw new \Exception("El ticket '$ticketBuscar' ya está registrado (ID: $ids). Solo se permite un segundo ingreso si el existente es 'Pase a QA' y el nuevo es 'Pase a Producción'.");
+                }
+            }
+
             // PASO 1: Obtener la siguiente fila disponible desde la BD local (evita duplicados)
             $stmt = $db->pdo->query('SELECT MAX(excel_row) FROM requerimientos');
             $lastRow = (int)($stmt->fetchColumn() ?: 0);
