@@ -1,8 +1,8 @@
 <?php
 /**
  * cleanup_duplicates.php
- * Elimina registros duplicados con excel_row 259 y 260
- * (ambos son el mismo ticket REQ 2026-029558, Pase a QA, 15/04/2026)
+ * Elimina el registro DUPLICADO de REQ 2026-029558:
+ * conserva el de menor excel_row, borra el de mayor excel_row.
  *
  * Uso: php scripts/cleanup_duplicates.php
  */
@@ -22,20 +22,31 @@ echo "Backup creado: $bak\n\n";
 $pdo = new PDO('sqlite:' . $dbPath);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$targets = [259, 260];
+// Buscar todos los duplicados del ticket
+$rows = $pdo->query(
+    "SELECT excel_row, id, numero_ticket, requerimiento, tipo_pase, fecha
+     FROM requerimientos
+     WHERE numero_ticket = 'REQ 2026-029558'
+     ORDER BY excel_row ASC"
+)->fetchAll(PDO::FETCH_ASSOC);
 
-echo "--- Registros a eliminar ---\n";
-foreach ($targets as $er) {
-    $row = $pdo->query("SELECT id, excel_row, numero_ticket, requerimiento, tipo_pase, fecha FROM requerimientos WHERE excel_row = $er")->fetch(PDO::FETCH_ASSOC);
-    if ($row) {
-        echo "  excel_row={$row['excel_row']} | id_interno={$row['id']} | ticket={$row['numero_ticket']} | req={$row['requerimiento']} | pase={$row['tipo_pase']} | fecha={$row['fecha']}\n";
-    } else {
-        echo "  excel_row=$er → NO ENCONTRADO (ya fue eliminado o no existe)\n";
-    }
+echo count($rows) . " registro(s) encontrado(s) para REQ 2026-029558:\n";
+foreach ($rows as $r) {
+    echo "  excel_row={$r['excel_row']} | id_interno={$r['id']} | req={$r['requerimiento']} | pase={$r['tipo_pase']} | fecha={$r['fecha']}\n";
 }
 
-$in      = implode(',', $targets);
-$deleted = $pdo->exec("DELETE FROM requerimientos WHERE excel_row IN ($in)");
-echo "\nRegistros eliminados: $deleted\n";
+if (count($rows) <= 1) {
+    echo "\nNada que limpiar — ya hay 1 o ningún registro.\n";
+    exit(0);
+}
+
+// Conservar solo el de menor excel_row, borrar el resto
+$keepRow   = $rows[0]['excel_row'];
+$deleteRows = array_slice($rows, 1);
+$deleteIds  = implode(',', array_column($deleteRows, 'excel_row'));
+
+echo "\nConservando excel_row=$keepRow. Eliminando excel_row(s): $deleteIds\n";
+$deleted = $pdo->exec("DELETE FROM requerimientos WHERE excel_row IN ($deleteIds)");
+echo "Registros eliminados: $deleted\n";
 echo "Total en BD ahora:    " . $pdo->query('SELECT COUNT(*) FROM requerimientos')->fetchColumn() . "\n";
-echo "\nListo. Si necesitas revertir, restaura el backup:\n  cp $bak $dbPath\n";
+echo "\nListo. Si necesitas revertir:\n  cp $bak $dbPath\n";
