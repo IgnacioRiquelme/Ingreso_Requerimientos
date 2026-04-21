@@ -54,9 +54,17 @@ a2ensite ingreso-requerimientos
 a2enmod rewrite
 systemctl reload apache2
 
-# Permisos
+# Permisos generales
 chown -R www-data:www-data "$TARGET_DIR"
 find "$TARGET_DIR" -type d -exec chmod 755 {} \;
 find "$TARGET_DIR" -type f -exec chmod 644 {} \;
+
+# Permisos de escritura para storage (www-data necesita escribir la DB)
+chown www-data:www-data "$TARGET_DIR/storage"
+chmod 775 "$TARGET_DIR/storage"
+chown www-data:www-data "$TARGET_DIR/storage/requerimientos.db" 2>/dev/null || true
+chmod 664 "$TARGET_DIR/storage/requerimientos.db" 2>/dev/null || true
+# Limpiar archivos WAL/SHM si quedaron de otra ejecución
+rm -f "$TARGET_DIR/storage/requerimientos.db-wal" "$TARGET_DIR/storage/requerimientos.db-shm"
 
 echo "Despliegue básico completado. Visit http://$SERVER_NAME/"
