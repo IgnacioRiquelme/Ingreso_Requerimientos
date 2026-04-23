@@ -12,8 +12,8 @@ if not exist "%APP_DIR%\vendor\autoload.php" (
     "%PHP%" "%COMPOSER%" install --no-interaction
 )
 
-REM Iniciar servidor PHP en puerto 8081
-start "" "%PHP%" -S localhost:8081 -t public
+REM Iniciar servidor PHP en puerto 8081 (sin ventana visible)
+start "" /B "%PHP%" -S localhost:8081 -t public >nul 2>&1
 
 REM Esperar un momento y abrir el navegador
 timeout /t 2 /nobreak >nul
