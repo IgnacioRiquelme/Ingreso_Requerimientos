@@ -3,7 +3,7 @@
  * migrate_csv_to_db.php — Migrar datos de CSV a BD local
  * Se ejecuta una sola vez para inicializar los combobox
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\LocalDbAdapter;

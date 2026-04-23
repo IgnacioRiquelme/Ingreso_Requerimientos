@@ -3,7 +3,7 @@
  * reset_db.php — Limpiar y reimportar la BD desde Excel
  * Borrar storage/requerimientos.db completamente y recargar datos
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 if (!isset($_SESSION['user'])) {

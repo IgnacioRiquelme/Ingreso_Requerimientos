@@ -4,7 +4,7 @@
  * Escribe el título en fila 1 y los encabezados de columna en fila 3.
  * Los datos existentes en fila 4+ NO se modifican.
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 use Requerimiento\ExcelGraphAdapter;
 

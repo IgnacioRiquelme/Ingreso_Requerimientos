@@ -7,7 +7,7 @@
  * O desde el servidor: php sync.php
  */
 set_time_limit(300); // 5 minutos de timeout para operaciones con Graph API
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\LocalDbAdapter;

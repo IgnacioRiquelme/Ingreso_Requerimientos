@@ -3,7 +3,7 @@
  * export_excel.php - Exportar datos filtrados a Excel
  */
 
-session_start();
+require_once __DIR__ . '/session_init.php';
 
 if (!isset($_SESSION['user'])) {
     header('HTTP/1.1 401 Unauthorized');

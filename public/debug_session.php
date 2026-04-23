@@ -2,7 +2,7 @@
 /**
  * debug_session.php — Verificar estado de la sesión actual
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 
 echo "<h2>Estado de Sesión Actual:</h2>";
 echo "<pre>";

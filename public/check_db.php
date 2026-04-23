@@ -2,7 +2,7 @@
 /**
  * check_db.php — Ver exactamente qué hay en la tabla combobox_values
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\LocalDbAdapter;

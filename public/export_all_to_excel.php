@@ -3,7 +3,7 @@
  * export_all_to_excel.php — Exportar TODA la BD a Excel OneDrive de una sola operación
  * Limpiar Excel, escribir todos los registros de la BD, y listo.
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 if (!isset($_SESSION['user'])) {

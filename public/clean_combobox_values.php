@@ -5,7 +5,7 @@
  * Elimina duplicados y espacios adicionales de todos los valores
  */
 date_default_timezone_set('America/Santiago');
-session_start();
+require_once __DIR__ . '/session_init.php';
 require __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\LocalDbAdapter;

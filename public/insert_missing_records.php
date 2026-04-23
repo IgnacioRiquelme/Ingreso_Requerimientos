@@ -3,7 +3,7 @@
  * insert_missing_records.php — Insertar registros que faltaron en la importación
  * Uso: accede desde navegador y click en botón
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 if (!isset($_SESSION['user'])) {

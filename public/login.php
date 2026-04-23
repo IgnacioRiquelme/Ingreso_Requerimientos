@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/session_init.php';
 require __DIR__ . '/../vendor/autoload.php';
 
 // Simple file-based users

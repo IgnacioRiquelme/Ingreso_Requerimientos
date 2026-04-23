@@ -2,7 +2,7 @@
 /**
  * test_add_otros.php — Prueba de inserción de "Otros"
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\LocalDbAdapter;

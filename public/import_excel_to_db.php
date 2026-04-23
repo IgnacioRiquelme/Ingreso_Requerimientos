@@ -3,7 +3,7 @@
  * import_excel_to_db.php — Importar TODOS los datos del Excel a la BD SQLite
  * Uso UNA SOLA VEZ para alimentar la BD desde cero
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 if (!isset($_SESSION['user'])) {

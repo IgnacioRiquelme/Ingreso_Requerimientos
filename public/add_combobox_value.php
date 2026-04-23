@@ -5,7 +5,7 @@
  * Otros campos: solo admin (ignacio.riquelme@cliptecnologia.com) sin necesidad de contraseña
  */
 set_time_limit(30);
-session_start();
+require_once __DIR__ . '/session_init.php';
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../vendor/autoload.php';

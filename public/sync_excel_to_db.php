@@ -3,7 +3,7 @@
  * sync_excel_to_db.php — Importar datos existentes del Excel a la BD local
  * Ejecutar una sola vez para inicializar la BD con datos históricos
  */
-session_start();
+require_once __DIR__ . '/session_init.php';
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Requerimiento\ExcelGraphAdapter;
