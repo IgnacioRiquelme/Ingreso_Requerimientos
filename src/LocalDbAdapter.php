@@ -195,11 +195,17 @@ class LocalDbAdapter
             SELECT * FROM requerimientos
             ORDER BY
                 substr(fecha, 7, 4) || substr(fecha, 4, 2) || substr(fecha, 1, 2) ASC,
-                CASE LOWER(turno)
-                    WHEN 'mañana' THEN 1
-                    WHEN 'tarde'  THEN 2
-                    WHEN 'noche'  THEN 3
-                    ELSE 4
+                CASE
+                    WHEN registro IS NULL OR instr(registro, ' | ') = 0 OR instr(registro, ':') = 0 THEN 9999
+                    ELSE
+                        CAST(substr(
+                            substr(registro, 1, instr(registro, ' | ') - 1),
+                            instr(substr(registro, 1, instr(registro, ' | ') - 1), ':') - 2, 2
+                        ) AS INTEGER) * 60 +
+                        CAST(substr(
+                            substr(registro, 1, instr(registro, ' | ') - 1),
+                            instr(substr(registro, 1, instr(registro, ' | ') - 1), ':') + 1, 2
+                        ) AS INTEGER)
                 END ASC,
                 id ASC
         ");
