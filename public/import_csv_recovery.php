@@ -114,7 +114,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 // Limpiar todos los registros si se solicitó
                 if ($limpiarBD) {
                     $pdo->exec('DELETE FROM requerimientos');
-                    $pdo->exec('DELETE FROM sqlite_sequence WHERE name="requerimientos"');
+                    // Resetear autoincrement solo si la tabla sqlite_sequence existe
+                    $seqExists = $pdo->query("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'")->fetchColumn();
+                    if ($seqExists) {
+                        $pdo->exec('DELETE FROM sqlite_sequence WHERE name="requerimientos"');
+                    }
                 }
 
                 // Asegurar que la tabla existe con todas las columnas
