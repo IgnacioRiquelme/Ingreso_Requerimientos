@@ -86,24 +86,7 @@ try {
     $tiposPase           = array_map('trim', $dbCombo->getComboboxValues('tipo_pase'));
     $tiposIC             = array_map('trim', $dbCombo->getComboboxValues('ic'));
 } catch (Exception $e) {
-    // Fallback a CSV si la BD no está disponible
-    function leerCSV($archivo) {
-        if (file_exists($archivo)) {
-            $lines = file($archivo, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            return array_map('trim', $lines);
-        }
-        return [];
-    }
-    $tiposSolicitante    = leerCSV($storagePath . '/tipos_solicitante.csv');
-    $tiposRequerimientos = leerCSV($storagePath . '/tipos_requerimientos.csv');
-    $tiposNegocios       = leerCSV($storagePath . '/tipos_negocios.csv');
-    $tiposAmbientes      = leerCSV($storagePath . '/tipos_ambientes.csv');
-    $tiposCapa           = leerCSV($storagePath . '/tipos_capa.csv');
-    $tiposServidor       = leerCSV($storagePath . '/tipos_servidor.csv');
-    $tiposEstado         = leerCSV($storagePath . '/tipos_estado.csv');
-    $tiposSolicitud      = leerCSV($storagePath . '/tipos_solicitud.csv');
-    $tiposPase           = leerCSV($storagePath . '/tipos_pase.csv');
-    $tiposIC             = leerCSV($storagePath . '/tipos_ic.csv');
+    die('Error cargando combobox desde BD: ' . htmlspecialchars($e->getMessage()));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -165,9 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $db = new LocalDbAdapter();
             $db->updateRequerimiento($id, $data);
-
-            // Marcar para sync a Excel en background
-            file_put_contents(__DIR__ . '/../storage/sync_pending.txt', "$id\n", FILE_APPEND | LOCK_EX);
 
             $success = true;
             $requerimiento = array_merge($requerimiento, $data);

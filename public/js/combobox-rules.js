@@ -97,22 +97,18 @@ function applyComboboxRules() {
     console.log('📋 Reglas disponibles en JS:', comboboxRules);
     
     // Buscar regla correspondiente con comparación case-insensitive + trim
+    // Cada regla puede tener match_fields explícito (ej. solo req+negocio) o usa PARENT_FIELDS por defecto
     const matchedRule = comboboxRules.find(rule => {
-        const ruleReq = (rule.requerimiento || '').trim().toLowerCase();
-        const ruleNeg = (rule.negocio || '').trim().toLowerCase();
-        const ruleAmb = (rule.ambiente || '').trim().toLowerCase();
+        const matchFields = rule.match_fields || PARENT_FIELDS;
         
-        const parentReq = (parentValues.requerimiento || '').trim().toLowerCase();
-        const parentNeg = (parentValues.negocio || '').trim().toLowerCase();
-        const parentAmb = (parentValues.ambiente || '').trim().toLowerCase();
+        const matches = matchFields.every(field => {
+            const ruleVal = (rule[field] || '').trim().toLowerCase();
+            const currentVal = (getFieldValue(field) || '').trim().toLowerCase();
+            console.log(`  Comparando [${field}]: "${ruleVal}" vs "${currentVal}"`);
+            return ruleVal === currentVal;
+        });
         
-        const matches = 
-            ruleReq === parentReq &&
-            ruleNeg === parentNeg &&
-            ruleAmb === parentAmb;
-        
-        console.log(`  Comparando: "${ruleReq}" vs "${parentReq}", "${ruleNeg}" vs "${parentNeg}", "${ruleAmb}" vs "${parentAmb}" → ${matches}`);
-        
+        console.log(`  Resultado regla "${rule.requerimiento}" + "${rule.negocio}": ${matches}`);
         return matches;
     });
     
@@ -130,9 +126,15 @@ function applyComboboxRules() {
 
 /**
  * Aplicar valores específicos de una regla
+ * Si la regla tiene match_fields, también pre-rellena campos padre no usados en el match (ej. ambiente)
  */
 function applyFieldValues(rule) {
-    CHILD_FIELDS.forEach(fieldName => {
+    const matchFields = rule.match_fields || PARENT_FIELDS;
+    // Campos a pre-rellenar: hijos siempre + padres que NO son parte del match (ej. ambiente en reglas de 2 padres)
+    const extraParents = PARENT_FIELDS.filter(f => !matchFields.includes(f));
+    const fieldsToFill = [...CHILD_FIELDS, ...extraParents];
+    
+    fieldsToFill.forEach(fieldName => {
         const value = rule[fieldName];
         if (value && tomSelectInstances[fieldName]) {
             setFieldValue(fieldName, value);

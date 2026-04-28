@@ -196,21 +196,11 @@ $hoy = date('d/m/Y');
                     <?php endif; ?>
                 </div>
 
-                <!-- Admin Section -->
-                <div class="mt-8 text-center space-y-2">
-                    <p class="text-gray-500 text-xs bg-blue-50 p-3 rounded border border-blue-200">
-                        ℹ️ <strong>Los datos se guardan inmediatamente en la BD local.</strong><br>
-                        Se sincronizan a Excel automáticamente en background (puede tomar 15-30 minutos).
-                    </p>
-                    <p class="text-gray-500 text-xs">
-                        <a href="sync_excel_to_db.php" class="text-gray-400 hover:text-gray-600 underline">
-                            Importar datos Excel a BD (primera vez)
-                        </a>
-                    </p>
-                    <p class="text-gray-500 text-xs">
-                        <a href="reset_db.php" class="text-gray-400 hover:text-gray-600 underline">
-                            Resetear BD y reimportar (si hay errores)
-                        </a>
+                <!-- Info Section -->
+                <div class="mt-8 text-center">
+                    <p class="text-gray-500 text-xs bg-green-50 p-3 rounded border border-green-200">
+                        ✅ <strong>Los datos se guardan en la base de datos local.</strong><br>
+                        Todo queda en la BD — no se depende de Excel para nada.
                     </p>
                 </div>
             </div>

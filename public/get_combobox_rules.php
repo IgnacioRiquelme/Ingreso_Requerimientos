@@ -52,6 +52,78 @@ $defaultRules = [
         'tipo_solicitud'=> 'Proactivanet',
         'tipo_pase'     => 'Normal',
         'ic'            => 'Si'
+    ],
+    // Reglas de 2 padres (req + negocio) — ambiente se pre-rellena como hijo
+    [
+        'match_fields'  => ['requerimiento', 'negocio'],
+        'requerimiento' => 'Desvinculación de Usuario',
+        'negocio'       => 'BCI Seguros',
+        'ambiente'      => 'As400',
+        'capa'          => 'Aplicativo',
+        'servidor'      => 'Concorde',
+        'estado'        => 'Exitoso',
+        'tipo_solicitud'=> 'Proactivanet',
+        'tipo_pase'     => 'Normal',
+        'ic'            => 'No'
+    ],
+    [
+        'match_fields'  => ['requerimiento', 'negocio'],
+        'requerimiento' => 'Desvinculación de Usuario',
+        'negocio'       => 'ZENIT Seguros',
+        'ambiente'      => 'As400',
+        'capa'          => 'Aplicativo',
+        'servidor'      => 'Breton',
+        'estado'        => 'Exitoso',
+        'tipo_solicitud'=> 'Proactivanet',
+        'tipo_pase'     => 'Normal',
+        'ic'            => 'No'
+    ],
+    [
+        'match_fields'  => ['requerimiento', 'negocio'],
+        'requerimiento' => 'Creación de usuario',
+        'negocio'       => 'BCI Seguros',
+        'ambiente'      => 'As400',
+        'capa'          => 'Aplicativo',
+        'servidor'      => 'Concorde',
+        'estado'        => 'Exitoso',
+        'tipo_solicitud'=> 'Proactivanet',
+        'tipo_pase'     => 'Normal',
+        'ic'            => 'No'
+    ],
+    [
+        'match_fields'  => ['requerimiento', 'negocio'],
+        'requerimiento' => 'Creación de usuario',
+        'negocio'       => 'ZENIT Seguros',
+        'ambiente'      => 'As400',
+        'capa'          => 'Aplicativo',
+        'servidor'      => 'Breton',
+        'estado'        => 'Exitoso',
+        'tipo_solicitud'=> 'Proactivanet',
+        'tipo_pase'     => 'Normal',
+        'ic'            => 'No'
+    ],
+    // Reglas de 3 padres (req + negocio + ambiente)
+    [
+        'requerimiento' => 'Ejecución de Script',
+        'negocio'       => 'BCI Seguros',
+        'ambiente'      => 'As400',
+        'capa'          => 'Aplicativo',
+        'servidor'      => 'Concorde',
+        'estado'        => 'Exitoso',
+        'tipo_solicitud'=> 'Proactivanet',
+        'tipo_pase'     => 'Normal',
+        'ic'            => 'No'
+    ],
+    [
+        'requerimiento' => 'Ejecución de Script',
+        'negocio'       => 'ZENIT Seguros',
+        'ambiente'      => 'As400',
+        'capa'          => 'Aplicativo',
+        'servidor'      => 'Breton',
+        'estado'        => 'Exitoso',
+        'tipo_solicitud'=> 'Proactivanet',
+        'tipo_pase'     => 'Normal',
+        'ic'            => 'No'
     ]
 ];
 

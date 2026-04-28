@@ -1,13 +1,16 @@
 <?php
 /**
- * sync_excel_to_db.php — Importar datos existentes del Excel a la BD local
- * Ejecutar una sola vez para inicializar la BD con datos históricos
+ * sync_excel_to_db.php — DESHABILITADO
+ * La BD SQLite es la fuente de verdad única. No se importa desde Excel.
  */
 require_once __DIR__ . '/session_init.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+if (!isset($_SESSION['user'])) {
+    header('Location: login.php');
+    exit;
+}
+header('Location: requerimientos.php?msg=sync_disabled');
+exit;
 
-use Requerimiento\ExcelGraphAdapter;
-use Requerimiento\LocalDbAdapter;
 
 if (!isset($_SESSION['user'])) {
     header('Location: login.php');

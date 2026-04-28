@@ -22,7 +22,7 @@ echo ========== Levantando Aplicacion ==========
 echo.
 
 REM 1. Composer
-echo [1/3] Instalando dependencias Composer...
+echo [1/2] Instalando dependencias Composer...
 cd /d "%SCRIPT_DIR%"
 "%PHP_BIN%" "%COMPOSER_BIN%" install --no-interaction
 if %errorlevel% equ 0 (
@@ -33,19 +33,8 @@ if %errorlevel% equ 0 (
 )
 echo.
 
-REM 2. Resolver configuraciones
-echo [2/3] Resolviendo configuraciones...
-if exist "%SCRIPT_DIR%scripts\resolve_share.php" (
-    "%PHP_BIN%" "%SCRIPT_DIR%scripts\resolve_share.php"
-)
-echo OK
-echo.
-
-REM 3. Sincronizar BD
-echo [3/3] Sincronizando base de datos...
-if exist "%SCRIPT_DIR%public\sync_excel_to_db.php" (
-    "%PHP_BIN%" "%SCRIPT_DIR%public\sync_excel_to_db.php"
-)
+REM 2. Abrir navegador
+echo [2/2] Abriendo navegador...
 echo OK
 echo.
 

@@ -84,26 +84,7 @@ try {
     $tiposPase = array_map('trim', $tiposPase);
     $tiposIC = array_map('trim', $tiposIC);
 } catch (Exception $e) {
-    // Si BD está vacía o no existe, cargar desde CSV como fallback
-    function leerCSV($archivo) {
-        if (file_exists($archivo)) {
-            $lines = file($archivo, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            return array_map('trim', $lines);
-        }
-        return [];
-    }
-    
-    $storagePath = __DIR__ . '/../storage';
-    $tiposSolicitante = leerCSV($storagePath . '/tipos_solicitante.csv');
-    $tiposRequerimientos = leerCSV($storagePath . '/tipos_requerimientos.csv');
-    $tiposNegocios = leerCSV($storagePath . '/tipos_negocios.csv');
-    $tiposAmbientes = leerCSV($storagePath . '/tipos_ambientes.csv');
-    $tiposCapa = leerCSV($storagePath . '/tipos_capa.csv');
-    $tiposServidor = leerCSV($storagePath . '/tipos_servidor.csv');
-    $tiposEstado = leerCSV($storagePath . '/tipos_estado.csv');
-    $tiposSolicitud = leerCSV($storagePath . '/tipos_solicitud.csv');
-    $tiposPase = leerCSV($storagePath . '/tipos_pase.csv');
-    $tiposIC = leerCSV($storagePath . '/tipos_ic.csv');
+    die('Error cargando combobox desde BD: ' . htmlspecialchars($e->getMessage()));
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -177,13 +158,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'registro'        => getRegistroTimestamp($user['name']),
             ];
             
-            // PASO 2: Guardar en BD (instantáneo)
+            // PASO 2: Guardar en BD (fuente de verdad única)
             $db->insertRequerimiento($excelRow, $data);
-            
-            // PASO 3: Iniciar sync async a Excel (no-bloquea)
-            // Usa una llamada AJAX silenciosa para sincronizar en background
-            // (esto se ejecuta después de devolver la respuesta)
-            file_put_contents(__DIR__ . '/../storage/sync_pending.txt', "$excelRow\n", FILE_APPEND | LOCK_EX);
             
             $success = true;
             $_POST = [];
