@@ -387,8 +387,9 @@ function aplicarFiltros() {
         }
         
         // Verificar filtro de fecha exacta (para "Hoy")
+        // Comparar como número para evitar mismatch por ceros iniciales (27/4/2026 vs 27/04/2026)
         if (filtrosActuales.fecha) {
-            if (fechaFila !== filtrosActuales.fecha) {
+            if (fechaANumero(fechaFila) !== fechaANumero(filtrosActuales.fecha)) {
                 mostrar = false;
             }
         }
