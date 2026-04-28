@@ -195,6 +195,12 @@ class LocalDbAdapter
             SELECT * FROM requerimientos
             ORDER BY
                 substr(fecha, 7, 4) || substr(fecha, 4, 2) || substr(fecha, 1, 2) ASC,
+                CASE LOWER(turno)
+                    WHEN 'mañana' THEN 1
+                    WHEN 'tarde'  THEN 2
+                    WHEN 'noche'  THEN 3
+                    ELSE 4
+                END ASC,
                 id ASC
         ");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
