@@ -191,10 +191,12 @@ class LocalDbAdapter
      */
     public function getAllRequerimientos(): array
     {
-        $stmt = $this->pdo->query('
-            SELECT * FROM requerimientos 
-            ORDER BY excel_row ASC
-        ');
+        $stmt = $this->pdo->query("
+            SELECT * FROM requerimientos
+            ORDER BY
+                substr(fecha, 7, 4) || substr(fecha, 4, 2) || substr(fecha, 1, 2) ASC,
+                id ASC
+        ");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
