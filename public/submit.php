@@ -228,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">SOLICITANTE <span class="text-red-500">*</span></label>
-                    <select name="solicitante" class="searchable w-full" required>
+                    <select name="solicitante" class="searchable w-full">
                         <option value="">Selecciona un solicitante</option>
                         <?php foreach ($tiposSolicitante as $s): ?>
                             <option value="<?php echo htmlspecialchars($s); ?>"><?php echo htmlspecialchars($s); ?></option>
@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">REQUERIMIENTO <span class="text-red-500">*</span></label>
-                    <select name="requerimiento" class="searchable w-full" required>
+                    <select name="requerimiento" class="searchable w-full">
                         <option value="">Selecciona un requerimiento</option>
                         <?php foreach ($tiposRequerimientos as $r): ?>
                             <option value="<?php echo htmlspecialchars($r); ?>"><?php echo htmlspecialchars($r); ?></option>
@@ -250,7 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">NEGOCIO <span class="text-red-500">*</span></label>
-                    <select name="negocio" class="searchable w-full" required>
+                    <select name="negocio" class="searchable w-full">
                         <option value="">Selecciona un negocio</option>
                         <?php foreach ($tiposNegocios as $n): ?>
                             <option value="<?php echo htmlspecialchars($n); ?>"><?php echo htmlspecialchars($n); ?></option>
@@ -259,7 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">AMBIENTE <span class="text-red-500">*</span></label>
-                    <select name="ambiente" class="searchable w-full" required>
+                    <select name="ambiente" class="searchable w-full">
                         <option value="">Selecciona un ambiente</option>
                         <?php foreach ($tiposAmbientes as $a): ?>
                             <option value="<?php echo htmlspecialchars($a); ?>"><?php echo htmlspecialchars($a); ?></option>
@@ -272,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">CAPA <span class="text-red-500">*</span></label>
-                    <select name="capa" class="searchable w-full" required>
+                    <select name="capa" class="searchable w-full">
                         <option value="">Selecciona una capa</option>
                         <?php foreach ($tiposCapa as $c): ?>
                             <option value="<?php echo htmlspecialchars($c); ?>"><?php echo htmlspecialchars($c); ?></option>
@@ -281,7 +281,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">SERVIDOR <span class="text-red-500">*</span></label>
-                    <select name="servidor" class="searchable w-full" required>
+                    <select name="servidor" class="searchable w-full">
                         <option value="">Selecciona un servidor</option>
                         <?php foreach ($tiposServidor as $sv): ?>
                             <option value="<?php echo htmlspecialchars($sv); ?>"><?php echo htmlspecialchars($sv); ?></option>
@@ -294,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">ESTADO <span class="text-red-500">*</span></label>
-                    <select name="estado" class="searchable w-full" required>
+                    <select name="estado" class="searchable w-full">
                         <option value="">Selecciona un estado</option>
                         <?php foreach ($tiposEstado as $e): ?>
                             <option value="<?php echo htmlspecialchars($e); ?>"><?php echo htmlspecialchars($e); ?></option>
@@ -303,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">TIPO SOLICITUD <span class="text-red-500">*</span></label>
-                    <select name="tipo_solicitud" class="searchable w-full" required>
+                    <select name="tipo_solicitud" class="searchable w-full">
                         <option value="">Selecciona tipo de solicitud</option>
                         <?php foreach ($tiposSolicitud as $ts): ?>
                             <option value="<?php echo htmlspecialchars($ts); ?>"><?php echo htmlspecialchars($ts); ?></option>
@@ -316,7 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">TIPO PASE <span class="text-red-500">*</span></label>
-                    <select name="tipo_pase" class="searchable w-full" required>
+                    <select name="tipo_pase" class="searchable w-full">
                         <option value="">Selecciona tipo de pase</option>
                         <?php foreach ($tiposPase as $tp): ?>
                             <option value="<?php echo htmlspecialchars($tp); ?>"><?php echo htmlspecialchars($tp); ?></option>
@@ -325,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">IC <span class="text-red-500">*</span></label>
-                    <select name="ic" class="searchable w-full" required>
+                    <select name="ic" class="searchable w-full">
                         <option value="">Selecciona IC</option>
                         <?php foreach ($tiposIC as $ic): ?>
                             <option value="<?php echo htmlspecialchars($ic); ?>"><?php echo htmlspecialchars($ic); ?></option>
