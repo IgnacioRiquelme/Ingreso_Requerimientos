@@ -12,7 +12,7 @@ $defaultRules = [
     [
         'requerimiento' => 'Pase a QA',
         'negocio'       => 'BCI Seguros',
-        'ambiente'      => 'AS400',
+        'ambiente'      => 'As400',
         'capa'          => 'Aplicativo',
         'servidor'      => 'Ascerbci',
         'estado'        => 'Exitoso',
@@ -23,7 +23,7 @@ $defaultRules = [
     [
         'requerimiento' => 'Pase a QA',
         'negocio'       => 'ZENIT Seguros',
-        'ambiente'      => 'AS400',
+        'ambiente'      => 'As400',
         'capa'          => 'Aplicativo',
         'servidor'      => 'Ascerzen',
         'estado'        => 'Exitoso',
@@ -34,7 +34,7 @@ $defaultRules = [
     [
         'requerimiento' => 'Pase a Producción',
         'negocio'       => 'BCI Seguros',
-        'ambiente'      => 'AS400',
+        'ambiente'      => 'As400',
         'capa'          => 'Aplicativo',
         'servidor'      => 'Concorde',
         'estado'        => 'Exitoso',
@@ -45,7 +45,7 @@ $defaultRules = [
     [
         'requerimiento' => 'Pase a Producción',
         'negocio'       => 'ZENIT Seguros',
-        'ambiente'      => 'AS400',
+        'ambiente'      => 'As400',
         'capa'          => 'Aplicativo',
         'servidor'      => 'Breton',
         'estado'        => 'Exitoso',
@@ -104,7 +104,7 @@ $defaultRules = [
     ],
     // Reglas de 3 padres (req + negocio + ambiente)
     [
-        'requerimiento' => 'Ejecución de Script',
+        'requerimiento' => 'Ejecucion de Script',
         'negocio'       => 'BCI Seguros',
         'ambiente'      => 'As400',
         'capa'          => 'Aplicativo',
@@ -115,7 +115,7 @@ $defaultRules = [
         'ic'            => 'No'
     ],
     [
-        'requerimiento' => 'Ejecución de Script',
+        'requerimiento' => 'Ejecucion de Script',
         'negocio'       => 'ZENIT Seguros',
         'ambiente'      => 'As400',
         'capa'          => 'Aplicativo',
