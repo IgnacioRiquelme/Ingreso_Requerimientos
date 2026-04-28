@@ -15,9 +15,17 @@ if (!isset($_SESSION['user'])) {
 // Solo admins pueden usar este script
 $adminsFile = __DIR__ . '/../storage/admins.json';
 $admins = file_exists($adminsFile) ? json_decode(file_get_contents($adminsFile), true) : [];
-$isAdmin = in_array($_SESSION['user'], $admins, true);
+$userEmail = strtolower($_SESSION['user']['email'] ?? '');
+$isAdmin = false;
+foreach ($admins as $admin) {
+    $adminEmail = strtolower($admin['email'] ?? (is_string($admin) ? $admin : ''));
+    if ($userEmail && $userEmail === $adminEmail) {
+        $isAdmin = true;
+        break;
+    }
+}
 if (!$isAdmin) {
-    die('<h2>Acceso denegado. Solo administradores pueden usar este script.</h2>');
+    die('<h2>Acceso denegado. Solo administradores pueden usar este script.</h2><p>Usuario: ' . htmlspecialchars($userEmail) . '</p>');
 }
 
 $error     = '';
@@ -81,14 +89,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 $sep = ',';
             }
 
-            // Detectar si la primera línea es encabezado
+            // Detectar filas de título/encabezado a saltear (puede haber título + encabezado)
             $startRow = 0;
-            $firstCols = str_getcsv($lines[0], $sep);
             $headerKeywords = ['turno', 'fecha', 'requerimiento', 'solicitante', 'negocio', 'id'];
-            $lowerFirst = array_map('strtolower', array_map('trim', $firstCols));
-            $matchCount = count(array_intersect($lowerFirst, $headerKeywords));
-            if ($matchCount >= 3) {
-                $startRow = 1; // Saltar encabezado
+            foreach (array_slice($lines, 0, 5) as $idx => $line) {
+                $cols = str_getcsv($line, $sep);
+                $lower = array_map('strtolower', array_map('trim', $cols));
+                $matchCount = count(array_intersect($lower, $headerKeywords));
+                if ($matchCount >= 3) {
+                    $startRow = $idx + 1; // Saltar hasta después del encabezado
+                    break;
+                }
             }
 
             try {
