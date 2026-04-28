@@ -520,6 +520,12 @@ function exportarAExcel() {
         return;
     }
 
+    // Ordenar por fecha ascendente (dd/mm/yyyy -> yyyy-mm-dd para comparar)
+    filasDatos.sort((a, b) => {
+        const parseFecha = f => { const p = (f || '').split('/'); return p.length === 3 ? p[2]+p[1]+p[0] : ''; };
+        return parseFecha(a[1]).localeCompare(parseFecha(b[1]));
+    });
+
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Requerimientos');
 

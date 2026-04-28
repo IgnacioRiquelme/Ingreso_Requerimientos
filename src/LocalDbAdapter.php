@@ -193,7 +193,7 @@ class LocalDbAdapter
     {
         $stmt = $this->pdo->query('
             SELECT * FROM requerimientos 
-            ORDER BY excel_row DESC
+            ORDER BY excel_row ASC
         ');
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
