@@ -60,7 +60,10 @@ define('COL_OBSERVACION',   16);
 define('COL_ID',            17);
 define('COL_REGISTRO',      18);
 
+$limpiarBD = false;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
+    $limpiarBD = !empty($_POST['limpiar_bd']);
     $file = $_FILES['csv_file'];
 
     if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -107,6 +110,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 $pdo = new PDO('sqlite:' . $dbPath);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $pdo->exec('PRAGMA journal_mode=WAL');
+
+                // Limpiar todos los registros si se solicitó
+                if ($limpiarBD) {
+                    $pdo->exec('DELETE FROM requerimientos');
+                    $pdo->exec('DELETE FROM sqlite_sequence WHERE name="requerimientos"');
+                }
 
                 // Asegurar que la tabla existe con todas las columnas
                 $pdo->exec("CREATE TABLE IF NOT EXISTS requerimientos (
@@ -295,8 +304,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 </p>
             </div>
 
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                ⚠️ Los registros existentes con el mismo ID serán actualizados. Los registros nuevos se insertarán.
+            <div class="bg-red-50 border border-red-300 rounded-lg p-3">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="limpiar_bd" value="1" id="chkLimpiar" class="w-4 h-4 accent-red-600">
+                    <span class="text-sm font-semibold text-red-700">⚠️ Borrar TODA la BD antes de importar (recomendado para reimportación limpia)</span>
+                </label>
+                <p class="text-xs text-red-500 mt-1 ml-6">Si no marcas esta opción, los registros existentes con el mismo ID se actualizarán y los nuevos se insertarán.</p>
             </div>
 
             <button type="submit"
