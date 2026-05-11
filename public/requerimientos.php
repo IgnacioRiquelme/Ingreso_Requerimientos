@@ -30,6 +30,15 @@ function formatearFecha(string $fecha): string {
     return $fecha;
 }
 
+// Normalizar timestamp/registro para que siempre tenga dos dígitos
+// Convierte "7 octubre 2026 9:32 | Creado por: nombre" a "07 octubre 2026 09:32 | Creado por: nombre"
+function normalizarRegistro(string $registro): string {
+    if (preg_match('/^(\d{1,2})\s(.+?)\s(\d{4})\s(\d{1,2}):(\d{2})\s\|\s(.+)$/', $registro, $matches)) {
+        return sprintf('%02d %s %d %02d:%s | %s', (int)$matches[1], $matches[2], (int)$matches[3], (int)$matches[4], $matches[5], $matches[6]);
+    }
+    return $registro;
+}
+
 // PASO 0: Asegurar que los combobox estén inicializados desde CSV
 require_once __DIR__ . '/ensure_combobox.php';
 
@@ -178,7 +187,7 @@ $hoy = date('d/m/Y');
                                 </thead>
                                 <tbody class="divide-y" id="tablaBody">
                                     <?php foreach ($requerimientos as $req): ?>
-                                        <tr class="hover:bg-gray-50 transition fila-data" data-turno="<?php echo htmlspecialchars($req['turno']); ?>" data-fecha="<?php echo htmlspecialchars($req['fecha']); ?>" data-ticket="<?php echo htmlspecialchars($req['numero_ticket']); ?>" data-requerimiento="<?php echo htmlspecialchars($req['requerimiento']); ?>" data-solicitante="<?php echo htmlspecialchars($req['solicitante']); ?>" data-negocio="<?php echo htmlspecialchars($req['negocio']); ?>" data-ambiente="<?php echo htmlspecialchars($req['ambiente']); ?>" data-capa="<?php echo htmlspecialchars($req['capa']); ?>" data-servidor="<?php echo htmlspecialchars($req['servidor']); ?>" data-estado="<?php echo htmlspecialchars($req['estado']); ?>" data-tipo-solicitud="<?php echo htmlspecialchars($req['tipo_solicitud']); ?>" data-tipo-pase="<?php echo htmlspecialchars($req['tipo_pase']); ?>" data-ic="<?php echo htmlspecialchars($req['ic']); ?>" data-cantidad="<?php echo htmlspecialchars($req['cantidad'] ?? ''); ?>" data-tiempo-total="<?php echo htmlspecialchars($req['tiempo_total'] ?? ''); ?>" data-tiempo-unidad="<?php echo htmlspecialchars($req['tiempo_unidad'] ?? ''); ?>" data-observaciones="<?php echo htmlspecialchars($req['observaciones'] ?? ''); ?>" data-id="<?php echo htmlspecialchars($req['excel_row'] ?? ''); ?>" data-registro="<?php echo htmlspecialchars($req['registro'] ?? ''); ?>">
+                                        <tr class="hover:bg-gray-50 transition fila-data" data-turno="<?php echo htmlspecialchars($req['turno']); ?>" data-fecha="<?php echo htmlspecialchars($req['fecha']); ?>" data-ticket="<?php echo htmlspecialchars($req['numero_ticket']); ?>" data-requerimiento="<?php echo htmlspecialchars($req['requerimiento']); ?>" data-solicitante="<?php echo htmlspecialchars($req['solicitante']); ?>" data-negocio="<?php echo htmlspecialchars($req['negocio']); ?>" data-ambiente="<?php echo htmlspecialchars($req['ambiente']); ?>" data-capa="<?php echo htmlspecialchars($req['capa']); ?>" data-servidor="<?php echo htmlspecialchars($req['servidor']); ?>" data-estado="<?php echo htmlspecialchars($req['estado']); ?>" data-tipo-solicitud="<?php echo htmlspecialchars($req['tipo_solicitud']); ?>" data-tipo-pase="<?php echo htmlspecialchars($req['tipo_pase']); ?>" data-ic="<?php echo htmlspecialchars($req['ic']); ?>" data-cantidad="<?php echo htmlspecialchars($req['cantidad'] ?? ''); ?>" data-tiempo-total="<?php echo htmlspecialchars($req['tiempo_total'] ?? ''); ?>" data-tiempo-unidad="<?php echo htmlspecialchars($req['tiempo_unidad'] ?? ''); ?>" data-observaciones="<?php echo htmlspecialchars($req['observaciones'] ?? ''); ?>" data-id="<?php echo htmlspecialchars($req['excel_row'] ?? ''); ?>" data-registro="<?php echo htmlspecialchars(normalizarRegistro($req['registro'] ?? '')); ?>">
                                             <td class="px-4 py-4 font-mono text-xs text-gray-400 font-semibold"><?php echo htmlspecialchars($req['excel_row'] ?? ''); ?></td>
                                             <td class="px-6 py-4 font-semibold text-gray-900"><?php echo htmlspecialchars($req['turno']); ?></td>
                                             <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars(formatearFecha($req['fecha'])); ?></td>
