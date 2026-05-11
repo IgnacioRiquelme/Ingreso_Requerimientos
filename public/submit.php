@@ -44,13 +44,13 @@ function esReqProduccion(string $req): bool {
     return str_contains($n, 'produccion') || str_contains($n, 'paso a prod') || str_contains($n, 'pasos a prod');
 }
 
-// Función para generar timestamp en formato "1 octubre 2025 9:32 | Creado por: nombre"
+// Función para generar timestamp en formato "07 octubre 2025 09:32 | Creado por: nombre"
 function getRegistroTimestamp($userName) {
     $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    $dia = (int)date('j');
+    $dia = date('d');  // Con leading zero
     $mes = $meses[(int)date('n') - 1];
     $ano = date('Y');
-    $hora = date('G');
+    $hora = date('H');  // Con leading zero
     $minuto = date('i');
     return "$dia $mes $ano $hora:$minuto | Creado por: $userName";
 }

@@ -26,10 +26,10 @@ function getTurno() {
 
 function getRegistroTimestamp($userName) {
     $meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-    $dia = (int)date('j');
+    $dia = date('d');  // Con leading zero
     $mes = $meses[(int)date('n') - 1];
     $ano = date('Y');
-    $hora = date('G');
+    $hora = date('H');  // Con leading zero
     $minuto = date('i');
     return "$dia $mes $ano $hora:$minuto | Creado por: $userName";
 }

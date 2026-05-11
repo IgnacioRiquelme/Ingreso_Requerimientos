@@ -17,9 +17,17 @@ $user = $_SESSION['user'];
 function excelDateToString($excelDate) {
     if (is_numeric($excelDate) && $excelDate > 0) {
         $unixDate = ($excelDate - 25569) * 86400;
-        return date('d/m/Y', $unixDate);
+        return formatearFecha(date('d/m/Y', $unixDate));
     }
-    return (string)$excelDate;
+    return formatearFecha((string)$excelDate);
+}
+
+// Formatear fecha a siempre tener dos dígitos (7/5/2026 -> 07/05/2026)
+function formatearFecha(string $fecha): string {
+    if (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $fecha, $matches)) {
+        return sprintf('%02d/%02d/%d', (int)$matches[1], (int)$matches[2], (int)$matches[3]);
+    }
+    return $fecha;
 }
 
 // PASO 0: Asegurar que los combobox estén inicializados desde CSV
@@ -173,7 +181,7 @@ $hoy = date('d/m/Y');
                                         <tr class="hover:bg-gray-50 transition fila-data" data-turno="<?php echo htmlspecialchars($req['turno']); ?>" data-fecha="<?php echo htmlspecialchars($req['fecha']); ?>" data-ticket="<?php echo htmlspecialchars($req['numero_ticket']); ?>" data-requerimiento="<?php echo htmlspecialchars($req['requerimiento']); ?>" data-solicitante="<?php echo htmlspecialchars($req['solicitante']); ?>" data-negocio="<?php echo htmlspecialchars($req['negocio']); ?>" data-ambiente="<?php echo htmlspecialchars($req['ambiente']); ?>" data-capa="<?php echo htmlspecialchars($req['capa']); ?>" data-servidor="<?php echo htmlspecialchars($req['servidor']); ?>" data-estado="<?php echo htmlspecialchars($req['estado']); ?>" data-tipo-solicitud="<?php echo htmlspecialchars($req['tipo_solicitud']); ?>" data-tipo-pase="<?php echo htmlspecialchars($req['tipo_pase']); ?>" data-ic="<?php echo htmlspecialchars($req['ic']); ?>" data-cantidad="<?php echo htmlspecialchars($req['cantidad'] ?? ''); ?>" data-tiempo-total="<?php echo htmlspecialchars($req['tiempo_total'] ?? ''); ?>" data-tiempo-unidad="<?php echo htmlspecialchars($req['tiempo_unidad'] ?? ''); ?>" data-observaciones="<?php echo htmlspecialchars($req['observaciones'] ?? ''); ?>" data-id="<?php echo htmlspecialchars($req['excel_row'] ?? ''); ?>" data-registro="<?php echo htmlspecialchars($req['registro'] ?? ''); ?>">
                                             <td class="px-4 py-4 font-mono text-xs text-gray-400 font-semibold"><?php echo htmlspecialchars($req['excel_row'] ?? ''); ?></td>
                                             <td class="px-6 py-4 font-semibold text-gray-900"><?php echo htmlspecialchars($req['turno']); ?></td>
-                                            <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars($req['fecha']); ?></td>
+                                            <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars(formatearFecha($req['fecha'])); ?></td>
                                             <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars($req['numero_ticket']); ?></td>
                                             <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars($req['requerimiento']); ?></td>
                                             <td class="px-6 py-4 text-gray-700"><?php echo htmlspecialchars($req['solicitante']); ?></td>
