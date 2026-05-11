@@ -97,18 +97,16 @@ function applyComboboxRules() {
     console.log('📋 Reglas disponibles en JS:', comboboxRules);
     
     // Buscar regla correspondiente con comparación case-insensitive + trim
-    // Cada regla puede tener match_fields explícito (ej. solo req+negocio) o usa PARENT_FIELDS por defecto
+    // Todas las reglas usan los 3 campos padre: requerimiento, negocio, ambiente
     const matchedRule = comboboxRules.find(rule => {
-        const matchFields = rule.match_fields || PARENT_FIELDS;
-        
-        const matches = matchFields.every(field => {
+        const matches = PARENT_FIELDS.every(field => {
             const ruleVal = (rule[field] || '').trim().toLowerCase();
             const currentVal = (getFieldValue(field) || '').trim().toLowerCase();
             console.log(`  Comparando [${field}]: "${ruleVal}" vs "${currentVal}"`);
             return ruleVal === currentVal;
         });
         
-        console.log(`  Resultado regla "${rule.requerimiento}" + "${rule.negocio}": ${matches}`);
+        console.log(`  Resultado regla "${rule.requerimiento}" + "${rule.negocio}" + "${rule.ambiente}": ${matches}`);
         return matches;
     });
     
@@ -125,16 +123,11 @@ function applyComboboxRules() {
 }
 
 /**
- * Aplicar valores específicos de una regla
- * Si la regla tiene match_fields, también pre-rellena campos padre no usados en el match (ej. ambiente)
+ * Aplicar valores específicos de una regla — solo campos hijo
+ * Los campos padre (requerimiento, negocio, ambiente) son seleccionados manualmente por el usuario
  */
 function applyFieldValues(rule) {
-    const matchFields = rule.match_fields || PARENT_FIELDS;
-    // Campos a pre-rellenar: hijos siempre + padres que NO son parte del match (ej. ambiente en reglas de 2 padres)
-    const extraParents = PARENT_FIELDS.filter(f => !matchFields.includes(f));
-    const fieldsToFill = [...CHILD_FIELDS, ...extraParents];
-    
-    fieldsToFill.forEach(fieldName => {
+    CHILD_FIELDS.forEach(fieldName => {
         const value = rule[fieldName];
         if (value && tomSelectInstances[fieldName]) {
             setFieldValue(fieldName, value);

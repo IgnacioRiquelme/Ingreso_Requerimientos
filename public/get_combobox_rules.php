@@ -53,9 +53,8 @@ $defaultRules = [
         'tipo_pase'     => 'Normal',
         'ic'            => 'Si'
     ],
-    // Reglas de 2 padres (req + negocio) — ambiente se pre-rellena como hijo
+    // Reglas de 3 padres (req + negocio + ambiente)
     [
-        'match_fields'  => ['requerimiento', 'negocio'],
         'requerimiento' => 'Desvinculación de Usuario',
         'negocio'       => 'BCI Seguros',
         'ambiente'      => 'As400',
@@ -67,7 +66,6 @@ $defaultRules = [
         'ic'            => 'No'
     ],
     [
-        'match_fields'  => ['requerimiento', 'negocio'],
         'requerimiento' => 'Desvinculación de Usuario',
         'negocio'       => 'ZENIT Seguros',
         'ambiente'      => 'As400',
@@ -79,7 +77,6 @@ $defaultRules = [
         'ic'            => 'No'
     ],
     [
-        'match_fields'  => ['requerimiento', 'negocio'],
         'requerimiento' => 'Creación de usuario',
         'negocio'       => 'BCI Seguros',
         'ambiente'      => 'As400',
@@ -91,7 +88,6 @@ $defaultRules = [
         'ic'            => 'No'
     ],
     [
-        'match_fields'  => ['requerimiento', 'negocio'],
         'requerimiento' => 'Creación de usuario',
         'negocio'       => 'ZENIT Seguros',
         'ambiente'      => 'As400',
